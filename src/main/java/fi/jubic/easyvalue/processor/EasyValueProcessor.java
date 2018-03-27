@@ -3,6 +3,7 @@ package fi.jubic.easyvalue.processor;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.google.auto.service.AutoService;
 import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.*;
 import fi.jubic.easyvalue.EasyProperty;
@@ -19,6 +20,7 @@ import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.util.*;
 
+@AutoService(Processor.class)
 @SupportedAnnotationTypes({
         "fi.jubic.easyvalue.EasyValue",
         "fi.jubic.easyvalue.EasyProeprty"

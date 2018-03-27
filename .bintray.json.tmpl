@@ -1,0 +1,28 @@
+{
+  "package": {
+    "name": "easyvalue",
+    "repo": "maven",
+    "subject": "jubicoy"
+  },
+
+  "version": {
+    "name": "${TRAVIS_TAG}",
+    "desc": "Tagged build",
+    "released": "${RELEASED_DATE}",
+    "vcs_tag": "${TRAVIS_TAG}",
+    "attributes": [],
+    "gpgSign": false
+  },
+
+  "files": [
+    {
+      "includePattern": "target/(easy-value-${TRAVIS_TAG}(.*)\.jar)",
+      "uploadPattern": "/fi/jubic/easyvalue/${TRAVIS_TAG}/$1"
+    },
+    {
+      "includePattern": "./(pom.xml)",
+      "uploadPattern": "/fi/jubic/easyvalue/${TRAVIS_TAG}/easyvalue-${TRAVIS_TAG}.pom"
+    }
+  ],
+  "publish": true
+}

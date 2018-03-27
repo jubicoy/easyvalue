@@ -1,0 +1,16 @@
+language: java
+jdk:
+- oraclejdk8
+script:
+- mvn clean install
+before_deploy:
+- RELEASED_DATE=$(date +%Y-%m-%d) envsubst < .bintray.json.tmpl > .bintray.json
+deploy:
+  provider: bintray
+  file: ".bintray.json"
+  user: vilppuvuorinen
+  skip_cleanup: true
+  key:
+    secure: LtDoU6bYPZMadLX/3fa3ncQQmrDcJyg6ytRIaX+oiCJq1zI+MTxEm4PTnenL/o83ld1v9eaqpg6VOW47HfX011EE4cZgmV1Z4fAIVkfOqK8lTOqs6UGa775OSWuQAHkDLNGvQAVVUWstDR113SYKyWGTkWUuCnp1tEBzA61xMp2zXVK1ZYIkX8kRjUnUu/lAKX3IqroJgg4B1xwMHLnvRZY0/m8NiWVf8hDzdFrKhWTOQUh9ztOgmXjMETofhgUDpzl3Ql3gGwZvl3k3PI/Q7eDsZOoTMfB1nFPF0Ojjyr+EAv3bNKlp03BoUYvIn8SZUi82ZOu2nvswBOu0q8LdLO/gGgHls+asSXBGeHw6Y1JPvTF/jBH0+7vBCFQg7Nr/h+vHR5OHFG1O6CqlpjFBE50DFGR1jfeg49dpr5gJLVRw8klYSGHpKhgVp50uKOdyvbD436PRhIVqvAas7G+HGlF37J6d7B8/M60nTQLzs2bcxUnJO9WXk6xRlOmLl2Q/gHTeK3LVl17qemWr2Obt9F03UbCKq4mtxPOwKL5cUNVMYCAtH+fxuuN86ZfaM2U1XvjEis0ZeULoYu0lBDnIf3px5Exh348gr/HrIQ7oin0WPgzn4Lh2qudvtPeM42lAGp0zZb9+JR/NWH8A/34IzPHpOLoheimBu0aQx6ivB5I=
+  on:
+    tags: true

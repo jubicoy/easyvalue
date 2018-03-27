@@ -18,7 +18,6 @@ import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @SupportedAnnotationTypes({
         "fi.jubic.easyvalue.EasyValue",
@@ -87,25 +86,7 @@ public class EasyValueProcessor extends AbstractProcessor {
                     .classBuilder(generatedName)
                     .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                     .superclass(TypeName.get(typeElement.asType()))
-                    .addAnnotation(AutoValue.class)
-                    .addMethod(
-                            MethodSpec.methodBuilder("toBuilder")
-                                    .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                                    .returns(ClassName.get(packageName, generatedName, "Builder"))
-                                    .build()
-                    )
-                    .addMethod(
-                            MethodSpec.methodBuilder("builder")
-                                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                                    .returns(ClassName.get(packageName, generatedName, "Builder"))
-                                    .addStatement(
-                                            "return new $L_$L.$L()",
-                                            "AutoValue",
-                                            generatedName,
-                                            "Builder"
-                                    )
-                                    .build()
-                    );
+                    .addAnnotation(AutoValue.class);
 
             boolean hasJson = !element.getAnnotation(EasyValue.class).excludeJson();
 
@@ -115,7 +96,8 @@ public class EasyValueProcessor extends AbstractProcessor {
                                 AnnotationSpec.builder(JsonDeserialize.class)
                                         .addMember(
                                                 "builder",
-                                                "$L.$L.$L",
+                                                "$L_$L.$L.$L",
+                                                "AutoValue",
                                                 generatedName,
                                                 "Builder",
                                                 "class"
@@ -135,6 +117,20 @@ public class EasyValueProcessor extends AbstractProcessor {
             }
 
             List<Property> properties = new ArrayList<>();
+
+            Element parentBuilder = null;
+            for (Element enclosedElement : element.getEnclosedElements()) {
+                if (enclosedElement.getKind() != ElementKind.CLASS) continue;
+                if (!enclosedElement.getSimpleName().toString().equals("Builder")) continue;
+                parentBuilder = enclosedElement;
+            }
+            if (parentBuilder == null) {
+                messager.printMessage(
+                        Diagnostic.Kind.ERROR,
+                        "Could not find Builder class"
+                );
+                return true;
+            }
 
             for (Element valueElement : roundEnvironment.getElementsAnnotatedWith(EasyProperty.class)) {
                 if (valueElement.getEnclosingElement() != element) continue;
@@ -207,16 +203,64 @@ public class EasyValueProcessor extends AbstractProcessor {
                 builderClass = builderClass.addMethod(setterMethod.build());
             }
 
-            easyClass.addType(
-                    builderClass
-                            .addMethod(
-                                    MethodSpec.methodBuilder("build")
-                                            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                                            .returns(ClassName.get(packageName, generatedName))
-                                            .build()
+            easyClass
+                    .addType(
+                            builderClass
+                                    .addMethod(
+                                            MethodSpec.methodBuilder("build")
+                                                    .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                                                    .returns(ClassName.get(packageName, generatedName))
+                                                    .build()
+                                    )
+                                    .build()
+                    )
+                    .addType(
+                            builderWrapper(
+                                    TypeName.get(typeElement.asType()),
+                                    packageName,
+                                    generatedName,
+                                    properties
                             )
-                            .build()
-            );
+                    )
+                    .addMethod(
+                            MethodSpec.methodBuilder("toInnerBuilder")
+                                    .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                                    .returns(ClassName.get(packageName, generatedName, "Builder"))
+                                    .build()
+                    )
+                    .addMethod(
+                            MethodSpec.methodBuilder("toBuilder")
+                                    .addModifiers(Modifier.PUBLIC)
+                                    .returns(TypeName.get(parentBuilder.asType()))
+                                    .addStatement(
+                                            "$T wrapper = new $T()",
+                                            TypeName.get(parentBuilder.asType()),
+                                            TypeName.get(parentBuilder.asType())
+                                    )
+                                    .addStatement(
+                                            "wrapper.copyWrappedFrom(new BuilderWrapper(toInnerBuilder()))"
+                                    )
+                                    .addStatement("return wrapper")
+                                    .build()
+                    )
+                    .addMethod(
+                            MethodSpec.methodBuilder("getBuilder")
+                                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                                    .returns(TypeName.get(parentBuilder.asType()))
+                                    .addStatement(
+                                            "$T wrapper = new $T()",
+                                            TypeName.get(parentBuilder.asType()),
+                                            TypeName.get(parentBuilder.asType())
+                                    )
+                                    .addStatement(
+                                            "wrapper.copyWrappedFrom(new BuilderWrapper(new $L_$L.$L()))",
+                                            "AutoValue",
+                                            generatedName,
+                                            "Builder"
+                                    )
+                                    .addStatement("return wrapper")
+                                    .build()
+                    );
 
             try {
                 JavaFile.builder(packageName, easyClass.build()).build().writeTo(filer);
@@ -255,5 +299,84 @@ public class EasyValueProcessor extends AbstractProcessor {
         public String getJsonName() {
             return jsonName;
         }
+    }
+
+    private TypeSpec builderWrapper(
+            TypeName originClass,
+            String packageName,
+            String generatedName,
+            List<Property> properties
+    ) {
+        TypeName klassType = ClassName.get(packageName, generatedName);
+        TypeName builderType = ClassName.get(packageName, generatedName, "Builder");
+
+        TypeSpec.Builder wrapper = TypeSpec.classBuilder("BuilderWrapper")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addField(
+                        FieldSpec.builder(builderType, "builder", Modifier.PRIVATE)
+                                .build()
+                )
+                .addMethod(
+                        MethodSpec.constructorBuilder()
+                                .addModifiers(Modifier.PUBLIC)
+                                .addStatement(
+                                        "this.builder = new $L_$L.$L()",
+                                        "AutoValue",
+                                        generatedName,
+                                        "Builder"
+                                )
+                                .build()
+                )
+                .addMethod(
+                        MethodSpec.constructorBuilder()
+                                .addModifiers(Modifier.PUBLIC)
+                                .addParameter(
+                                        ParameterSpec.builder(builderType, "builder").build()
+                                )
+                                .addStatement("this.builder = builder")
+                                .build()
+                )
+                .addMethod(
+                        MethodSpec.methodBuilder("copyWrappedFrom")
+                                .addParameter(
+                                        ClassName.get(packageName, generatedName, "BuilderWrapper"),
+                                        "other"
+                                )
+                                .addStatement("this.builder = other.builder")
+                                .build()
+                )
+                .addMethod(
+                        MethodSpec.methodBuilder("build")
+                                .addModifiers(Modifier.PUBLIC)
+                                .returns(originClass)
+                                .addStatement("return this.builder.build()")
+                                .build()
+                );
+
+        for (Property property : properties) {
+            String nameString = "set"
+                    + property.getName().toString().substring(0, 1).toUpperCase()
+                    + property.getName().toString().substring(1);
+            wrapper = wrapper
+                    .addMethod(
+                            MethodSpec.methodBuilder(nameString)
+                                    .addModifiers(Modifier.PUBLIC)
+                                    .addParameter(
+                                            ParameterSpec.builder(
+                                                    TypeName.get(property.getType()),
+                                                    property.getName().toString()
+                                            ).build()
+                                    )
+                                    .returns(ClassName.get(packageName, generatedName, "BuilderWrapper"))
+                                    .addStatement(
+                                            "return new BuilderWrapper(this.builder.$L($L))",
+                                            nameString,
+                                            property.getName().toString()
+                                    )
+                                    .build()
+                    );
+        }
+
+        return wrapper.build();
     }
 }

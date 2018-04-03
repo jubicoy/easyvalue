@@ -1,5 +1,6 @@
 package fi.jubic.easyvalue.processor;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -115,6 +116,14 @@ public class EasyValueProcessor extends AbstractProcessor {
                                                 JsonInclude.Include.NON_NULL.name()
                                         )
                                         .build()
+                        )
+                        .addAnnotation(
+                                AnnotationSpec.builder(JsonIgnoreProperties.class)
+                                        .addMember(
+                                                "ignoreUnknown",
+                                                "true"
+                                        )
+                                        .build()
                         );
             }
 
@@ -180,6 +189,14 @@ public class EasyValueProcessor extends AbstractProcessor {
 
             TypeSpec.Builder builderClass = TypeSpec.classBuilder("Builder")
                     .addAnnotation(AutoValue.Builder.class)
+                    .addAnnotation(
+                            AnnotationSpec.builder(JsonIgnoreProperties.class)
+                                    .addMember(
+                                            "ignoreUnknown",
+                                            "true"
+                                    )
+                                    .build()
+                    )
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.ABSTRACT);
 
             for (Property property : properties) {
@@ -240,7 +257,7 @@ public class EasyValueProcessor extends AbstractProcessor {
                                             TypeName.get(parentBuilder.asType())
                                     )
                                     .addStatement(
-                                            "wrapper.copyWrappedFrom(new BuilderWrapper(toInnerBuilder()))"
+                                            "wrapper.builder = toInnerBuilder()"
                                     )
                                     .addStatement("return wrapper")
                                     .build()
@@ -255,7 +272,7 @@ public class EasyValueProcessor extends AbstractProcessor {
                                             TypeName.get(parentBuilder.asType())
                                     )
                                     .addStatement(
-                                            "wrapper.copyWrappedFrom(new BuilderWrapper(new $L_$L.$L()))",
+                                            "wrapper.builder = new $L_$L.$L()",
                                             "AutoValue",
                                             generatedName,
                                             "Builder"
@@ -312,21 +329,19 @@ public class EasyValueProcessor extends AbstractProcessor {
         TypeName klassType = ClassName.get(packageName, generatedName);
         TypeName builderType = ClassName.get(packageName, generatedName, "Builder");
 
+        TypeVariableName typeVariable = TypeVariableName.get("T");
+
         TypeSpec.Builder wrapper = TypeSpec.classBuilder("BuilderWrapper")
-                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.ABSTRACT)
+                .addTypeVariable(TypeVariableName.get("T extends BuilderWrapper<T>"))
                 .addField(
-                        FieldSpec.builder(builderType, "builder", Modifier.PRIVATE)
+                        FieldSpec.builder(builderType, "builder", Modifier.PROTECTED)
                                 .build()
                 )
                 .addMethod(
                         MethodSpec.constructorBuilder()
                                 .addModifiers(Modifier.PUBLIC)
-                                .addStatement(
-                                        "this.builder = new $L_$L.$L()",
-                                        "AutoValue",
-                                        generatedName,
-                                        "Builder"
-                                )
+                                .addStatement("this.builder = null")
                                 .build()
                 )
                 .addMethod(
@@ -336,6 +351,12 @@ public class EasyValueProcessor extends AbstractProcessor {
                                         ParameterSpec.builder(builderType, "builder").build()
                                 )
                                 .addStatement("this.builder = builder")
+                                .build()
+                )
+                .addMethod(
+                        MethodSpec.methodBuilder("create")
+                                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                                .returns(typeVariable)
                                 .build()
                 )
                 .addMethod(
@@ -369,12 +390,14 @@ public class EasyValueProcessor extends AbstractProcessor {
                                                     property.getName().toString()
                                             ).build()
                                     )
-                                    .returns(ClassName.get(packageName, generatedName, "BuilderWrapper"))
+                                    .returns(typeVariable)
+                                    .addStatement("T t = create()")
                                     .addStatement(
-                                            "return new BuilderWrapper(this.builder.$L($L))",
+                                            "t.builder = this.builder.$L($L)",
                                             nameString,
                                             property.getName().toString()
                                     )
+                                    .addStatement("return t")
                                     .build()
                     );
         }

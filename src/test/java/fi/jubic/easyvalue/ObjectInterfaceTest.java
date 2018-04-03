@@ -61,6 +61,11 @@ public class ObjectInterfaceTest {
             return EasyValue_ObjectInterfaceTest_TestUser.getBuilder();
         }
 
-        static class Builder extends EasyValue_ObjectInterfaceTest_TestUser.BuilderWrapper {}
+        static class Builder extends EasyValue_ObjectInterfaceTest_TestUser.BuilderWrapper {
+            @Override
+            public EasyValue_ObjectInterfaceTest_TestUser.BuilderWrapper create() {
+                return new Builder();
+            }
+        }
     }
 }

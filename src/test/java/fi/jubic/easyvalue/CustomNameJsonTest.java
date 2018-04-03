@@ -50,6 +50,11 @@ public class CustomNameJsonTest {
             return EasyValue_CustomNameJsonTest_TestUser.getBuilder();
         }
 
-        static class Builder extends EasyValue_CustomNameJsonTest_TestUser.BuilderWrapper {}
+        static class Builder extends EasyValue_CustomNameJsonTest_TestUser.BuilderWrapper<Builder> {
+            @Override
+            public Builder create() {
+                return new Builder();
+            }
+        }
     }
 }

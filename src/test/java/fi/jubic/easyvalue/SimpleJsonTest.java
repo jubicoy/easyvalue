@@ -53,6 +53,11 @@ public class SimpleJsonTest {
             return EasyValue_SimpleJsonTest_TestUser.getBuilder();
         }
 
-        static class Builder extends EasyValue_SimpleJsonTest_TestUser.BuilderWrapper {}
+        static class Builder extends EasyValue_SimpleJsonTest_TestUser.BuilderWrapper {
+            @Override
+            public EasyValue_SimpleJsonTest_TestUser.BuilderWrapper create() {
+                return new Builder();
+            }
+        }
     }
 }

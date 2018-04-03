@@ -56,6 +56,11 @@ public class SimpleBuilderTest {
             return EasyValue_SimpleBuilderTest_TestUser.getBuilder();
         }
 
-        static class Builder extends EasyValue_SimpleBuilderTest_TestUser.BuilderWrapper {}
+        static class Builder extends EasyValue_SimpleBuilderTest_TestUser.BuilderWrapper {
+            @Override
+            public EasyValue_SimpleBuilderTest_TestUser.BuilderWrapper create() {
+                return new Builder();
+            }
+        }
     }
 }

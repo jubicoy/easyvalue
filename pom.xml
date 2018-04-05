@@ -6,7 +6,7 @@
 
     <groupId>fi.jubic</groupId>
     <artifactId>easyvalue</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1.4</version>
 
     <dependencies>
         <dependency>

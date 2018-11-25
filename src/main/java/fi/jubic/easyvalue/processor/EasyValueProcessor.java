@@ -91,6 +91,30 @@ public class EasyValueProcessor extends AbstractProcessor {
                     .superclass(TypeName.get(typeElement.asType()))
                     .addAnnotation(AutoValue.class);
 
+
+            List<TypeVariableName> typeVariables;
+            {
+                typeVariables = new ArrayList<>();
+                for (TypeParameterElement parameter : typeElement.getTypeParameters()) {
+                    TypeVariableName typeVariable = TypeVariableName.get(parameter.getSimpleName().toString());
+
+                    List<TypeName> bounds = new ArrayList<>();
+                    for (TypeMirror mirror : parameter.getBounds()) {
+                        bounds.add(
+                                TypeName.get(mirror)
+                        );
+                    }
+
+                    typeVariables.add(
+                            typeVariable.withBounds(bounds)
+                    );
+                }
+            }
+
+            if (typeVariables.size() > 0) {
+                easyClass = easyClass.addTypeVariables(typeVariables);
+            }
+
             boolean hasJson = !element.getAnnotation(EasyValue.class).excludeJson();
 
             if (hasJson) {
@@ -199,6 +223,18 @@ public class EasyValueProcessor extends AbstractProcessor {
                     )
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.ABSTRACT);
 
+            if (typeVariables.size() > 0) {
+                builderClass = builderClass.addTypeVariables(typeVariables);
+            }
+
+            TypeName builderType = ClassName.get(packageName, generatedName, "Builder");
+            if (typeVariables.size() > 0) {
+                builderType = ParameterizedTypeName.get(
+                        (ClassName) builderType,
+                        typeVariables.toArray(new TypeName[0])
+                );
+            }
+
             for (Property property : properties) {
                 String nameString = property.getName().toString().substring(0, 1).toUpperCase()
                         + property.getName().toString().substring(1);
@@ -209,7 +245,7 @@ public class EasyValueProcessor extends AbstractProcessor {
                                 TypeName.get(property.getType()),
                                 property.getName().toString()
                         )
-                        .returns(ClassName.get(packageName, generatedName, "Builder"));
+                        .returns(builderType);
 
                 if (hasJson) {
                     setterMethod = setterMethod.addAnnotation(
@@ -222,13 +258,21 @@ public class EasyValueProcessor extends AbstractProcessor {
                 builderClass = builderClass.addMethod(setterMethod.build());
             }
 
+            TypeName easyName = ClassName.get(packageName, generatedName);
+            if (typeVariables.size() > 0) {
+                easyName = ParameterizedTypeName.get(
+                        (ClassName) easyName,
+                        typeVariables.toArray(new TypeVariableName[0])
+                );
+            }
+
             easyClass
                     .addType(
                             builderClass
                                     .addMethod(
                                             MethodSpec.methodBuilder("build")
                                                     .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                                                    .returns(ClassName.get(packageName, generatedName))
+                                                    .returns(easyName)
                                                     .build()
                                     )
                                     .build()
@@ -238,13 +282,14 @@ public class EasyValueProcessor extends AbstractProcessor {
                                     TypeName.get(typeElement.asType()),
                                     packageName,
                                     generatedName,
-                                    properties
+                                    properties,
+                                    typeVariables
                             )
                     )
                     .addMethod(
                             MethodSpec.methodBuilder("toInnerBuilder")
                                     .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                                    .returns(ClassName.get(packageName, generatedName, "Builder"))
+                                    .returns(builderType)
                                     .build()
                     )
                     .addMethod(
@@ -261,25 +306,31 @@ public class EasyValueProcessor extends AbstractProcessor {
                                     )
                                     .addStatement("return wrapper")
                                     .build()
-                    )
-                    .addMethod(
-                            MethodSpec.methodBuilder("getBuilder")
-                                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                                    .returns(TypeName.get(parentBuilder.asType()))
-                                    .addStatement(
-                                            "$T wrapper = new $T()",
-                                            TypeName.get(parentBuilder.asType()),
-                                            TypeName.get(parentBuilder.asType())
-                                    )
-                                    .addStatement(
-                                            "wrapper.builder = new $L_$L.$L()",
-                                            "AutoValue",
-                                            generatedName,
-                                            "Builder"
-                                    )
-                                    .addStatement("return wrapper")
-                                    .build()
                     );
+
+            {
+                MethodSpec.Builder getBuilderSpecBuilder = MethodSpec.methodBuilder("getBuilder")
+                        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                        .returns(TypeName.get(parentBuilder.asType()))
+                        .addStatement(
+                                "$T wrapper = new $T()",
+                                TypeName.get(parentBuilder.asType()),
+                                TypeName.get(parentBuilder.asType())
+                        )
+                        .addStatement(
+                                "wrapper.builder = new $L_$L.$L()",
+                                "AutoValue",
+                                generatedName,
+                                "Builder"
+                        )
+                        .addStatement("return wrapper");
+
+                if (typeVariables.size() > 0) {
+                    getBuilderSpecBuilder = getBuilderSpecBuilder.addTypeVariables(typeVariables);
+                }
+
+                easyClass.addMethod(getBuilderSpecBuilder.build());
+            }
 
             try {
                 JavaFile.builder(packageName, easyClass.build()).build().writeTo(filer);
@@ -324,16 +375,34 @@ public class EasyValueProcessor extends AbstractProcessor {
             TypeName originClass,
             String packageName,
             String generatedName,
-            List<Property> properties
+            List<Property> properties,
+            List<TypeVariableName> typeVariables
     ) {
         TypeName klassType = ClassName.get(packageName, generatedName);
         TypeName builderType = ClassName.get(packageName, generatedName, "Builder");
+        if (typeVariables.size() > 0) {
+            builderType = ParameterizedTypeName.get(
+                    (ClassName) builderType,
+                    typeVariables.toArray(new TypeName[0])
+            );
+        }
 
-        TypeVariableName typeVariable = TypeVariableName.get("T");
+        TypeVariableName typeVariable = TypeVariableName.get("BBB");
+        List<TypeVariableName> combinedTypeVariableNames = new ArrayList<>(typeVariables);
+        StringBuilder externalVars = new StringBuilder();
+        for (TypeVariableName name : combinedTypeVariableNames) {
+            externalVars.append(name.name);
+            externalVars.append(", ");
+        }
+        combinedTypeVariableNames.add(
+                TypeVariableName.get(
+                        String.format("BBB extends BuilderWrapper<%sBBB>", externalVars)
+                )
+        );
 
         TypeSpec.Builder wrapper = TypeSpec.classBuilder("BuilderWrapper")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.ABSTRACT)
-                .addTypeVariable(TypeVariableName.get("T extends BuilderWrapper<T>"))
+                .addTypeVariables(combinedTypeVariableNames)
                 .addField(
                         FieldSpec.builder(builderType, "builder", Modifier.PROTECTED)
                                 .build()
@@ -391,7 +460,7 @@ public class EasyValueProcessor extends AbstractProcessor {
                                             ).build()
                                     )
                                     .returns(typeVariable)
-                                    .addStatement("T t = create()")
+                                    .addStatement("BBB t = create()")
                                     .addStatement(
                                             "t.builder = this.builder.$L($L)",
                                             nameString,

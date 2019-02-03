@@ -31,14 +31,10 @@ public abstract class ValueClass {
   abstract Builder toBuilder();
 
   public static Builder builder() {
-    return EasyValue_ValueClass.getBuilder();
+    return new Builder();
   }
 
-  public static Builder extends EasyValue_ValueClass.BuilderWrapper<Builder> {
-    @Override
-    public Builder create() {
-      return new Builder();
-    }
+  public static Builder extends EasyValue_ValueClass.Builder {
   }
 }
 ```

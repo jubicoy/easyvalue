@@ -12,7 +12,7 @@ public class SimpleBuilderTest {
                 .setId(5L)
                 .setName("Richard")
                 .build();
-        Assert.assertEquals(new Long(5L), user.id());
+        Assert.assertEquals(5L, user.id());
         Assert.assertEquals("Richard", user.name());
     }
 
@@ -24,7 +24,7 @@ public class SimpleBuilderTest {
                 .build()
                 .toBuilder()
                 .build();
-        Assert.assertEquals(new Long(10L), user.id());
+        Assert.assertEquals(10L, user.id());
         Assert.assertEquals("RMS", user.name());
     }
 
@@ -37,7 +37,7 @@ public class SimpleBuilderTest {
                 .toBuilder()
                 .setId(12L)
                 .build();
-        Assert.assertEquals(new Long(12L), user.id());
+        Assert.assertEquals(12L, user.id());
         Assert.assertEquals("RMS", user.name());
     }
 
@@ -46,21 +46,17 @@ public class SimpleBuilderTest {
     @JsonSerialize(as = EasyValue_SimpleBuilderTest_TestUser.class)
     static abstract class TestUser {
         @EasyProperty
-        abstract Long id();
+        abstract long id();
         @EasyProperty
         abstract String name();
 
         abstract Builder toBuilder();
 
         static Builder builder() {
-            return EasyValue_SimpleBuilderTest_TestUser.getBuilder();
+            return new Builder();
         }
 
-        static class Builder extends EasyValue_SimpleBuilderTest_TestUser.BuilderWrapper {
-            @Override
-            public EasyValue_SimpleBuilderTest_TestUser.BuilderWrapper create() {
-                return new Builder();
-            }
+        static class Builder extends EasyValue_SimpleBuilderTest_TestUser.Builder {
         }
     }
 }

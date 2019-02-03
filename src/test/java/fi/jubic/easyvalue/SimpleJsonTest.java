@@ -16,7 +16,7 @@ public class SimpleJsonTest {
     public void simpleSerialization() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         Assert.assertEquals(
-                "{\"name\":\"Richard\",\"id\":5}",
+                "{\"id\":5,\"name\":\"Richard\"}",
                 mapper.writeValueAsString(
                         TestUser.builder()
                                 .setId(5L)
@@ -30,7 +30,7 @@ public class SimpleJsonTest {
     public void simpleDeserialization() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         TestUser user = mapper.readValue(
-                "{\"name\":\"Stallman\",\"id\":12}",
+                "{\"id\":12,\"name\":\"Stallman\"}",
                 TestUser.class
         );
         Assert.assertEquals(new Long(12L), user.id());
@@ -42,22 +42,18 @@ public class SimpleJsonTest {
     @JsonSerialize(as = EasyValue_SimpleJsonTest_TestUser.class)
     static abstract class TestUser {
         @EasyProperty
-        public abstract Long id();
+        abstract Long id();
 
         @EasyProperty
-        public abstract String name();
+        abstract String name();
 
         public abstract Builder toBuilder();
 
-        public static Builder builder() {
-            return EasyValue_SimpleJsonTest_TestUser.getBuilder();
+        static Builder builder() {
+            return new Builder();
         }
 
-        static class Builder extends EasyValue_SimpleJsonTest_TestUser.BuilderWrapper {
-            @Override
-            public EasyValue_SimpleJsonTest_TestUser.BuilderWrapper create() {
-                return new Builder();
-            }
+        static class Builder extends EasyValue_SimpleJsonTest_TestUser.Builder {
         }
     }
 }

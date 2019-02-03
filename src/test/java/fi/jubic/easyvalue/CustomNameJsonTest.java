@@ -14,7 +14,7 @@ public class CustomNameJsonTest {
     public void customNameSerializeTest() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         Assert.assertEquals(
-                "{\"n_a_m_e\":\"Richard\",\"id\":5}",
+                "{\"id\":5,\"n_a_m_e\":\"Richard\"}",
                 mapper.writeValueAsString(
                         TestUser.builder()
                                 .setId(5L)
@@ -28,7 +28,7 @@ public class CustomNameJsonTest {
     public void customNameDeserializeTest() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         TestUser user = mapper.readValue(
-                "{\"n_a_m_e\":\"Stallman\",\"id\":12}",
+                "{\"id\":12,\"n_a_m_e\":\"Stallman\"}",
                 TestUser.class
         );
         Assert.assertEquals(new Long(12L), user.id());
@@ -44,17 +44,11 @@ public class CustomNameJsonTest {
         @EasyProperty("n_a_m_e")
         abstract String name();
 
-        abstract Builder toBuilder();
-
         static Builder builder() {
-            return EasyValue_CustomNameJsonTest_TestUser.getBuilder();
+            return new Builder();
         }
 
-        static class Builder extends EasyValue_CustomNameJsonTest_TestUser.BuilderWrapper<Builder> {
-            @Override
-            public Builder create() {
-                return new Builder();
-            }
+        static class Builder extends EasyValue_CustomNameJsonTest_TestUser.Builder {
         }
     }
 }

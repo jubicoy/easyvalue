@@ -49,14 +49,10 @@ public class GenericsTest {
         abstract Builder<T> toBuilder();
 
         static <T> Builder<T> builder() {
-            return EasyValue_GenericsTest_TestGeneric.getBuilder();
+            return new Builder<>();
         }
 
-        static class Builder<T> extends EasyValue_GenericsTest_TestGeneric.BuilderWrapper<T, Builder<T>> {
-            @Override
-            public Builder<T> create() {
-                return new Builder<>();
-            }
+        static class Builder<T> extends EasyValue_GenericsTest_TestGeneric.Builder<T> {
         }
     }
 }

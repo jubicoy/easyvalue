@@ -7,9 +7,8 @@ import com.squareup.javapoet.*;
 import javax.annotation.Generated;
 import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
+import javax.lang.model.element.*;
+import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.time.Instant;
@@ -257,13 +256,22 @@ class ValueGenerator {
             ValueDefinition value,
             TypeSpec.Builder classBuilder
     ) {
+        boolean overridesToString = value.getElement().getEnclosedElements().stream()
+                .filter(element -> element.getKind().equals(ElementKind.METHOD))
+                .filter(element -> element.getSimpleName().toString().equals("toString"))
+                .map(element -> (ExecutableElement)element)
+                .filter(element -> String.class.getName().equals(element.getReturnType().toString()))
+                .anyMatch(element -> element.getParameters().isEmpty());
+
+        if (overridesToString) return;
+
         classBuilder.addMethod(
                 MethodSpec.methodBuilder("toString")
                         .addAnnotation(Override.class)
                         .addModifiers(Modifier.PUBLIC)
                         .returns(ClassName.get(String.class))
                         .addStatement(
-                                "return \"\\\"$L\\\"{\""
+                                "return \"$L{\""
                                 + String.join(
                                         " + \", \"",
                                         value.getProperties().stream()
@@ -290,6 +298,16 @@ class ValueGenerator {
             ValueDefinition value,
             TypeSpec.Builder classBuilder
     ) {
+        boolean overridesEquals = value.getElement().getEnclosedElements().stream()
+                .filter(element -> element.getKind().equals(ElementKind.METHOD))
+                .filter(element -> element.getSimpleName().toString().equals("equals"))
+                .map(element -> (ExecutableElement)element)
+                .filter(element -> element.getReturnType().getKind().equals(TypeKind.BOOLEAN))
+                .map(element -> element.getParameters().get(0))
+                .anyMatch(param -> Object.class.getCanonicalName().equals(((VariableElement) param).asType().toString()));
+
+        if (overridesEquals) return;
+
         classBuilder.addMethod(
                 MethodSpec.methodBuilder("equals")
                         .addAnnotation(Override.class)
@@ -345,6 +363,15 @@ class ValueGenerator {
             ValueDefinition value,
             TypeSpec.Builder classBuilder
     ) {
+        boolean overridesToHashCode = value.getElement().getEnclosedElements().stream()
+                .filter(element -> element.getKind().equals(ElementKind.METHOD))
+                .filter(element -> element.getSimpleName().toString().equals("hashCode"))
+                .map(element -> (ExecutableElement)element)
+                .filter(element -> element.getReturnType().getKind().equals(TypeKind.INT))
+                .anyMatch(element -> element.getParameters().isEmpty());
+
+        if (overridesToHashCode) return;
+
         MethodSpec.Builder hashCodeBuilder = MethodSpec.methodBuilder("hashCode")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)

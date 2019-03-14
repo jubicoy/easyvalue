@@ -50,7 +50,9 @@ class ValueGenerator {
                 .superclass(TypeName.get(definition.getElement().asType()))
                 .addTypeVariables(definition.getTypeVariables());
 
-        if (definition.isJacksonAnnotated()) {
+        boolean hasBuilder = definition.getBuilderElement() != null;
+
+        if (hasBuilder && definition.isJacksonAnnotated()) {
             classBuilder.addAnnotation(
                     AnnotationSpec.builder(JsonDeserialize.class)
                             .addMember(
@@ -76,11 +78,13 @@ class ValueGenerator {
         generateEquals(definition, classBuilder);
         generateHashCode(definition, classBuilder);
 
-        new BuilderGenerator()
-                .generateBuilder(
-                        definition,
-                        classBuilder
-                );
+        if (hasBuilder) {
+            new BuilderGenerator()
+                    .generateBuilder(
+                            definition,
+                            classBuilder
+                    );
+        }
 
         try {
             JavaFile.builder(
@@ -152,7 +156,7 @@ class ValueGenerator {
             TypeSpec.Builder classBuilder
     ) {
         MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder()
-                .addModifiers(Modifier.PRIVATE);
+                .addModifiers(Modifier.PUBLIC);
 
         value.getProperties().forEach(
                 property -> constructorBuilder.addParameter(

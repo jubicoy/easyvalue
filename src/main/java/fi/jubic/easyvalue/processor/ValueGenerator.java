@@ -1,8 +1,11 @@
 package fi.jubic.easyvalue.processor;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.squareup.javapoet.*;
+import fi.jubic.easyvalue.EasyValue;
 
 import javax.annotation.Generated;
 import javax.annotation.Nullable;
@@ -63,6 +66,17 @@ class ValueGenerator {
                             .build()
             );
         }
+
+        List<String> excludeAnnotations = Arrays.asList(
+                JsonDeserialize.class.getName(),
+                JsonSerialize.class.getName(),
+                EasyValue.class.getName()
+        );
+        definition.getElement().getAnnotationMirrors().stream()
+                .filter(annotationMirror -> !excludeAnnotations.contains(((QualifiedNameable) annotationMirror.getAnnotationType().asElement()).getQualifiedName().toString()))
+                .map(AnnotationSpec::get)
+                .forEach(classBuilder::addAnnotation);
+
 
         addModifiers(definition, classBuilder, messages);
         definition.getProperties().forEach(

@@ -6,12 +6,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.squareup.javapoet.*;
 import fi.jubic.easyvalue.EasyValue;
 
+import javax.annotation.Generated;
 import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +32,22 @@ class ValueGenerator {
         List<ProcessingMessage> messages = ProcessingMessage.list();
 
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(definition.getGeneratedName())
+                .addAnnotation(
+                        AnnotationSpec.builder(Generated.class)
+                                .addMember(
+                                        "value",
+                                        "\""
+                                                + EasyValueProcessor.class.getCanonicalName()
+                                                + "\""
+                                )
+                                .addMember(
+                                        "date",
+                                        "\""
+                                                + Instant.now().toString()
+                                                + "\""
+                                )
+                                .build()
+                )
                 .superclass(TypeName.get(definition.getElement().asType()))
                 .addTypeVariables(definition.getTypeVariables());
 

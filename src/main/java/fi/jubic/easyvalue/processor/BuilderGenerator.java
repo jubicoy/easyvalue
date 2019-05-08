@@ -1,10 +1,17 @@
 package fi.jubic.easyvalue.processor;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.squareup.javapoet.*;
+import fi.jubic.easyvalue.EasyValue;
 
 import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.QualifiedNameable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,6 +31,25 @@ class BuilderGenerator {
         }
         else if (subClassModifiers.contains(Modifier.PRIVATE)) {
             builderBuilder.addModifiers(Modifier.PRIVATE);
+        }
+
+        List<String> excludeAnnotations = Arrays.asList(
+                JsonDeserialize.class.getName(),
+                JsonSerialize.class.getName(),
+                EasyValue.class.getName()
+        );
+        value.getBuilderElement().getAnnotationMirrors().stream()
+                .filter(annotationMirror -> !excludeAnnotations.contains(((QualifiedNameable) annotationMirror.getAnnotationType().asElement()).getQualifiedName().toString()))
+                .map(AnnotationSpec::get)
+                .forEach(builderBuilder::addAnnotation);
+
+        {
+            JsonIgnoreProperties ignoreProperties = value.getElement().getAnnotation(JsonIgnoreProperties.class);
+            if (ignoreProperties != null) {
+                builderBuilder.addAnnotation(
+                        AnnotationSpec.get(ignoreProperties)
+                );
+            }
         }
 
         value.getProperties().forEach(

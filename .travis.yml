@@ -1,19 +1,16 @@
 language: java
 jdk:
-- oraclejdk8
-- oraclejdk11
-- openjdk8
-- openjdk11
+  - oraclejdk8
+  - oraclejdk11
+  - openjdk8
+  - openjdk11
 script:
-- mvn clean install
-before_deploy:
-- RELEASED_DATE=$(date +%Y-%m-%d) envsubst < .bintray.json.tmpl > .bintray.json
-deploy:
-  provider: bintray
-  file: ".bintray.json"
-  user: vilppuvuorinen
-  skip_cleanup: true
-  on:
-    tags: true
-  key:
-    secure: i0eciBNyM9YsgzlsY/ugnkJsEFqXCc4fKne/mMOGBkjgpCMNVsxlCN5f3ytrBxrI3p04RtRpKVlV87L5c3NTYKpkMBEwo4OG0GRa2rwzrUai1bLZWVTXhsysc7pPU458KA43zEN+FTOvxjI00Sn2r4a+9UoJulC8HXFcf+6lTqtZY+WOqrm6OTCFu1bQjQeVwGHwZ2L/6GezfkTHNEG20gOrM2LQjHykwZGVhTk0B5Zo/o+Nx+/0gJYPvsnWeUZB441rP7VYmUFnRwbnCZTLd45xU4y0QzE3X5zqoo6IeIqQYNQQKqctasooiHMIyAmRSH2UCyEN1PXJRb8LkuTiBs9xsExn1gEs5mWMPg5xTD+ei+5AwTkb/GR55mdOqSiu04at9+FfOli5JjY6b8iurPhKuWHUTuabMt+aOVzvpga4nRDi/5R5xj2jJ/wSmbhAug02qJWKUNOgjzBo+LIbdVdKFUvgKHn+baQENnBZby2BtIptvunP7BsBZY70Bj3b/KY8z6LtUFqWS/CLx4ZDsH1liIMiOftGfsRoXRR992sZPGYv2a25D+BiRJbZcvdIZFra9Oy2IfROZtJ456YMMu8ml093sDRYuHUBw6hPIHFCCmD57S4y8NZrV4JgKecvFaZnRlHzNfa676RE+O13PEWYR+nqEbjURvhd8cw1Nh4=
+  - mvn clean install
+
+jobs:
+  include:
+    - stage: deploy
+      jdk: openjdk8
+      if: tag IS present
+      script: 'cp .ci-settings.xml $HOME/.m2/settings.xml && mvn clean deploy -DskipTests'
+

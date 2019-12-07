@@ -10,6 +10,9 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class DefinitionParser {
     ProcessingResult<ValueDefinition> parseValue(Element element) {
@@ -31,18 +34,25 @@ class DefinitionParser {
         {
             List<String> enclosingElements = new ArrayList<>();
             Element enclosing = typeElement.getEnclosingElement();
-            while (enclosing.getKind() == ElementKind.CLASS) {
+            ElementKind enclosingKind = enclosing.getKind();
+            while (
+                    enclosingKind == ElementKind.CLASS
+                            || enclosingKind == ElementKind.INTERFACE
+                            || enclosingKind == ElementKind.ENUM
+            ) {
                 enclosingElements.add(enclosing.getSimpleName().toString());
                 enclosing = enclosing.getEnclosingElement();
+                enclosingKind = enclosing.getKind();
             }
 
             definition.setGeneratedName(
-                    enclosingElements.stream()
-                            .reduce(
-                                    "EasyValue_",
-                                    (a, b) -> a + b + "_"
-                            )
-                            + typeElement.getSimpleName().toString()
+                    Stream.of(
+                            Stream.of("EasyValue"),
+                            enclosingElements.stream(),
+                            Stream.of(typeElement.getSimpleName().toString())
+                    )
+                            .flatMap(Function.identity())
+                            .collect(Collectors.joining("_"))
             );
         }
 

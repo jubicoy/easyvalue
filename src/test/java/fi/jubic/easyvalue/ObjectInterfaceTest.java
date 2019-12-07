@@ -1,33 +1,44 @@
 package fi.jubic.easyvalue;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ObjectInterfaceTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
+class ObjectInterfaceTest {
     @Test
-    public void handlesValueEquality() {
-        Assert.assertEquals(TestUser.builder()
-                .setId(10L)
-                .setName("RMS")
-                .build(), TestUser.builder()
-                .setId(10L)
-                .setName("RMS")
-                .build());
+    void handlesValueEquality() {
+        assertEquals(
+                TestUser.builder()
+                        .setId(10L)
+                        .setName("RMS")
+                        .build(),
+                TestUser.builder()
+                        .setId(10L)
+                        .setName("RMS")
+                        .build()
+        );
 
-        Assert.assertNotEquals(TestUser.builder()
-                .setId(11L)
-                .setName("RMS")
-                .build(), TestUser.builder()
-                .setId(10L)
-                .setName("RMS")
-                .build());
-        Assert.assertNotEquals(TestUser.builder()
-                .setId(10L)
-                .setName("Richard")
-                .build(), TestUser.builder()
-                .setId(10L)
-                .setName("RMS")
-                .build());
+        assertNotEquals(
+                TestUser.builder()
+                        .setId(11L)
+                        .setName("RMS")
+                        .build(),
+                TestUser.builder()
+                        .setId(10L)
+                        .setName("RMS")
+                        .build()
+        );
+        assertNotEquals(
+                TestUser.builder()
+                        .setId(10L)
+                        .setName("Richard")
+                        .build(),
+                TestUser.builder()
+                        .setId(10L)
+                        .setName("RMS")
+                        .build()
+        );
     }
 
     @EasyValue

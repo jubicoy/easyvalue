@@ -1,49 +1,51 @@
 package fi.jubic.easyvalue;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ObjectMethodOverrideTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
+class ObjectMethodOverrideTest {
     @Test
-    public void overrideToStringTest() {
+    void overrideToStringTest() {
         TestObject object = TestObject.of(23L);
-        Assert.assertEquals("toString", object.toString());
+        assertEquals("toString", object.toString());
 
         ControlObject control = ControlObject.of(23L);
-        Assert.assertEquals(
+        assertEquals(
                 "fi.jubic.easyvalue.ObjectMethodOverrideTest.ControlObject{value=23}",
                 control.toString()
         );
     }
 
     @Test
-    public void overrideHashCodeTest() {
+    void overrideHashCodeTest() {
         TestObject object = TestObject.of(23L);
-        Assert.assertEquals(130898, object.hashCode());
+        assertEquals(130898, object.hashCode());
 
         ControlObject control = ControlObject.of(23L);
-        Assert.assertEquals(1000020, control.hashCode());
+        assertEquals(1000020, control.hashCode());
     }
 
     @Test
-    public void overrideEqualsTest() {
+    void overrideEqualsTest() {
         TestObject object1 = TestObject.of(23L);
         TestObject object2 = TestObject.of(23L);
         TestObject object3 = TestObject.of(12L);
 
-        Assert.assertNotEquals(object1, object1);
-        Assert.assertNotEquals(object1, object2);
-        Assert.assertNotEquals(object1, object3);
-        Assert.assertNotEquals(object2, object3);
+        assertNotEquals(object1, object1);
+        assertNotEquals(object1, object2);
+        assertNotEquals(object1, object3);
+        assertNotEquals(object2, object3);
 
         ControlObject control1 = ControlObject.of(23L);
         ControlObject control2 = ControlObject.of(23L);
         ControlObject control3 = ControlObject.of(12L);
 
-        Assert.assertEquals(control1, control1);
-        Assert.assertEquals(control1, control2);
-        Assert.assertNotEquals(control1, control3);
-        Assert.assertNotEquals(control2, control3);
+        assertEquals(control1, control1);
+        assertEquals(control1, control2);
+        assertNotEquals(control1, control3);
+        assertNotEquals(control2, control3);
     }
 
     @EasyValue(excludeJson = true)

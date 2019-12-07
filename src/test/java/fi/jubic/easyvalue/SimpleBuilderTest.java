@@ -2,34 +2,35 @@ package fi.jubic.easyvalue;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class SimpleBuilderTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class SimpleBuilderTest {
     @Test
-    public void builderCreatesSpecifiedObjects() {
+    void builderCreatesSpecifiedObjects() {
         TestUser user = TestUser.builder()
                 .setId(5L)
                 .setName("Richard")
                 .build();
-        Assert.assertEquals(5L, user.id());
-        Assert.assertEquals("Richard", user.name());
+        assertEquals(5L, user.id());
+        assertEquals("Richard", user.name());
     }
 
     @Test
-    public void toBuilderCycleGeneratesIdentical() {
+    void toBuilderCycleGeneratesIdentical() {
         TestUser user = TestUser.builder()
                 .setId(10L)
                 .setName("RMS")
                 .build()
                 .toBuilder()
                 .build();
-        Assert.assertEquals(10L, user.id());
-        Assert.assertEquals("RMS", user.name());
+        assertEquals(10L, user.id());
+        assertEquals("RMS", user.name());
     }
 
     @Test
-    public void toBuilderAllowsChanges() {
+    void toBuilderAllowsChanges() {
         TestUser user = TestUser.builder()
                 .setId(10L)
                 .setName("RMS")
@@ -37,8 +38,8 @@ public class SimpleBuilderTest {
                 .toBuilder()
                 .setId(12L)
                 .build();
-        Assert.assertEquals(12L, user.id());
-        Assert.assertEquals("RMS", user.name());
+        assertEquals(12L, user.id());
+        assertEquals("RMS", user.name());
     }
 
     @EasyValue

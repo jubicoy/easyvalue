@@ -1,29 +1,30 @@
 package fi.jubic.easyvalue;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class GenericsTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class GenericsTest {
     @Test
-    public void genericBuildable() {
+    void genericBuildable() {
         TestGeneric<String> object = TestGeneric.<String>builder()
                 .setValue("This is value")
                 .setAnotherValue("This is another value")
                 .build();
 
-        Assert.assertEquals("This is value", object.value());
-        Assert.assertEquals("This is another value", object.anotherValue());
+        assertEquals("This is value", object.value());
+        assertEquals("This is another value", object.anotherValue());
 
         TestGeneric<String> modified = object.toBuilder()
                 .setValue("Yet another value")
                 .build();
 
-        Assert.assertEquals("Yet another value", modified.value());
-        Assert.assertEquals("This is another value", modified.anotherValue());
+        assertEquals("Yet another value", modified.value());
+        assertEquals("This is another value", modified.anotherValue());
     }
 
     @Test
-    public void nestedGenericBuildable() {
+    void nestedGenericBuildable() {
         TestGeneric<String> object = TestGeneric.<String>builder()
                 .setValue("This is value")
                 .setAnotherValue("This is another value")
@@ -34,9 +35,9 @@ public class GenericsTest {
                 .setAnotherValue("Another")
                 .build();
 
-        Assert.assertEquals("This is value", parent.value().value());
-        Assert.assertEquals("This is another value", parent.value().anotherValue());
-        Assert.assertEquals("Another", parent.anotherValue());
+        assertEquals("This is value", parent.value().value());
+        assertEquals("This is another value", parent.value().anotherValue());
+        assertEquals("Another", parent.anotherValue());
     }
 
     @EasyValue

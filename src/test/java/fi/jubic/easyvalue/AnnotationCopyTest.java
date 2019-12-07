@@ -2,27 +2,30 @@ package fi.jubic.easyvalue;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class AnnotationCopyTest {
+
+class AnnotationCopyTest {
     @Test
-    public void copyAnnotationsTest() {
-        Assert.assertNotNull(
+    void copyAnnotationsTest() {
+        assertNotNull(
                 EasyValue_AnnotationCopyTest_TestClass.class.getAnnotation(CustomAnnotation.class)
         );
 
         JsonDeserialize jsonDeserialize = EasyValue_AnnotationCopyTest_TestClass.class
                 .getAnnotation(JsonDeserialize.class);
-        Assert.assertNotNull(jsonDeserialize);
-        Assert.assertEquals(Void.class, jsonDeserialize.as());
-        Assert.assertNotEquals(Void.class, jsonDeserialize.builder());
+        assertNotNull(jsonDeserialize);
+        assertEquals(Void.class, jsonDeserialize.as());
+        assertNotEquals(Void.class, jsonDeserialize.builder());
 
-        Assert.assertNull(
+        assertNull(
                 EasyValue_AnnotationCopyTest_TestClass.class.getAnnotation(JsonSerialize.class)
         );
     }

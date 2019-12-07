@@ -4,27 +4,26 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import java.io.IOException;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class JsonIgnoreUnknownTest {
+class JsonIgnoreUnknownTest {
     @Test
-    public void ignoreUnknownCopiedTest() throws IOException {
+    void ignoreUnknownCopiedTest() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         TestClassA instanceA = mapper.readValue(
                 "{\"id\": 12, \"unknown\": \"asd\"}",
                 TestClassA.class
         );
-        Assert.assertEquals(Long.valueOf(12L), instanceA.id());
+        assertEquals(Long.valueOf(12L), instanceA.id());
 
         TestClassB instanceB = mapper.readValue(
                 "{\"id\": 12, \"unknown\": \"asd\"}",
                 TestClassB.class
         );
-        Assert.assertEquals(Long.valueOf(12L), instanceB.id());
+        assertEquals(Long.valueOf(12L), instanceB.id());
     }
 
     @EasyValue

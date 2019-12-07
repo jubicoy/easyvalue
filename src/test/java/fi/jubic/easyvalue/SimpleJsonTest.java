@@ -4,19 +4,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import java.io.IOException;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SimpleJsonTest {
-
-
+class SimpleJsonTest {
     @Test
-    public void simpleSerialization() throws JsonProcessingException {
+    void simpleSerialization() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        Assert.assertEquals(
+        assertEquals(
                 "{\"id\":5,\"name\":\"Richard\"}",
                 mapper.writeValueAsString(
                         TestUser.builder()
@@ -28,14 +25,14 @@ public class SimpleJsonTest {
     }
 
     @Test
-    public void simpleDeserialization() throws IOException {
+    void simpleDeserialization() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         TestUser user = mapper.readValue(
                 "{\"id\":12,\"name\":\"Stallman\"}",
                 TestUser.class
         );
-        Assert.assertEquals(Long.valueOf(12L), user.id());
-        Assert.assertEquals("Stallman", user.name());
+        assertEquals(Long.valueOf(12L), user.id());
+        assertEquals("Stallman", user.name());
     }
 
     @EasyValue

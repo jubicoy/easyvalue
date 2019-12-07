@@ -1,13 +1,14 @@
 package fi.jubic.easyvalue;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class NoBuilderClassTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class NoBuilderClassTest {
     @Test
-    public void initializationTest() {
+    void initializationTest() {
         TestObject object = TestObject.of(1L);
-        Assert.assertEquals(1L, (long)object.value());
+        assertEquals(1L, (long)object.value());
     }
 
     @EasyValue(excludeJson = true)

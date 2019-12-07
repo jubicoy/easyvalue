@@ -40,9 +40,10 @@ public class GenericsTest {
     }
 
     @EasyValue
-    static abstract class TestGeneric<T> {
+    abstract static class TestGeneric<T> {
         @EasyProperty
         abstract T value();
+
         @EasyProperty
         abstract String anotherValue();
 

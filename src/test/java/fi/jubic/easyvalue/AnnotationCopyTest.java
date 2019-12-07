@@ -2,11 +2,12 @@ package fi.jubic.easyvalue;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class AnnotationCopyTest {
     @Test
@@ -15,7 +16,8 @@ public class AnnotationCopyTest {
                 EasyValue_AnnotationCopyTest_TestClass.class.getAnnotation(CustomAnnotation.class)
         );
 
-        JsonDeserialize jsonDeserialize = EasyValue_AnnotationCopyTest_TestClass.class.getAnnotation(JsonDeserialize.class);
+        JsonDeserialize jsonDeserialize = EasyValue_AnnotationCopyTest_TestClass.class
+                .getAnnotation(JsonDeserialize.class);
         Assert.assertNotNull(jsonDeserialize);
         Assert.assertEquals(Void.class, jsonDeserialize.as());
         Assert.assertNotEquals(Void.class, jsonDeserialize.builder());
@@ -33,7 +35,7 @@ public class AnnotationCopyTest {
     @CustomAnnotation
     @JsonDeserialize(as = EasyValue_AnnotationCopyTest_TestClass.class)
     @JsonSerialize(as = EasyValue_AnnotationCopyTest_TestClass.class)
-    static abstract class TestClass {
+    abstract static class TestClass {
         @EasyProperty
         abstract Long id();
 

@@ -1,12 +1,13 @@
 package fi.jubic.easyvalue.processor;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 interface ProcessingResult<T> {
     Optional<T> result();
+
     List<ProcessingMessage> messages();
 
     static <T> ProcessingResult<T> of(

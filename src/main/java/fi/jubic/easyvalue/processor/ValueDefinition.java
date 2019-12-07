@@ -2,9 +2,9 @@ package fi.jubic.easyvalue.processor;
 
 import com.squareup.javapoet.TypeVariableName;
 
-import javax.lang.model.element.TypeElement;
 import java.util.Collections;
 import java.util.List;
+import javax.lang.model.element.TypeElement;
 
 class ValueDefinition {
     private TypeElement element;

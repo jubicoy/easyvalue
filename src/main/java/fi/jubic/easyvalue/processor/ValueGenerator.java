@@ -3,15 +3,14 @@ package fi.jubic.easyvalue.processor;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.squareup.javapoet.*;
+import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import fi.jubic.easyvalue.EasyValue;
 
-import javax.annotation.Generated;
-import javax.annotation.Nullable;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.*;
-import javax.lang.model.type.TypeKind;
-import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
@@ -20,6 +19,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Generated;
+import javax.annotation.Nullable;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.QualifiedNameable;
+import javax.lang.model.type.TypeKind;
+import javax.tools.Diagnostic;
 
 class ValueGenerator {
     private final ProcessingEnvironment processingEnv;
@@ -72,7 +80,15 @@ class ValueGenerator {
                 EasyValue.class.getName()
         );
         definition.getElement().getAnnotationMirrors().stream()
-                .filter(annotationMirror -> !excludeAnnotations.contains(((QualifiedNameable) annotationMirror.getAnnotationType().asElement()).getQualifiedName().toString()))
+                .filter(
+                        annotationMirror -> !excludeAnnotations.contains(
+                                ((QualifiedNameable) annotationMirror.getAnnotationType()
+                                        .asElement()
+                                )
+                                        .getQualifiedName()
+                                        .toString()
+                        )
+                )
                 .map(AnnotationSpec::get)
                 .forEach(classBuilder::addAnnotation);
 
@@ -108,7 +124,8 @@ class ValueGenerator {
             )
                     .build()
                     .writeTo(processingEnv.getFiler());
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
             messages.add(
                     ProcessingMessage.of(
@@ -192,7 +209,8 @@ class ValueGenerator {
             PropertyDefinition property,
             TypeSpec.Builder classBuilder
     ) {
-        MethodSpec.Builder accessorBuilder = MethodSpec.overriding((ExecutableElement) property.getElement())
+        MethodSpec.Builder accessorBuilder = MethodSpec
+                .overriding((ExecutableElement) property.getElement())
                 .addStatement(
                         "return $L",
                         property.getName()
@@ -273,7 +291,9 @@ class ValueGenerator {
                 .filter(element -> element.getKind().equals(ElementKind.METHOD))
                 .filter(element -> element.getSimpleName().toString().equals("toString"))
                 .map(element -> (ExecutableElement)element)
-                .filter(element -> String.class.getName().equals(element.getReturnType().toString()))
+                .filter(
+                        element -> String.class.getName().equals(element.getReturnType().toString())
+                )
                 .anyMatch(element -> element.getParameters().isEmpty());
 
         if (overridesToString) return;
@@ -285,12 +305,9 @@ class ValueGenerator {
                         .returns(ClassName.get(String.class))
                         .addStatement(
                                 "return \"$L{\""
-                                + String.join(
-                                        " + \", \"",
-                                        value.getProperties().stream()
-                                                .map(ignore -> "+ \"$L=\" + $L")
-                                                .collect(Collectors.toList())
-                                )
+                                + value.getProperties().stream()
+                                        .map(ignore -> "+ \"$L=\" + $L")
+                                        .collect(Collectors.joining(" + \", \""))
                                 + "+ \"}\"",
                                 Stream.of(
                                         Stream.of(value.getElement().getQualifiedName().toString()),
@@ -317,7 +334,9 @@ class ValueGenerator {
                 .map(element -> (ExecutableElement)element)
                 .filter(element -> element.getReturnType().getKind().equals(TypeKind.BOOLEAN))
                 .map(element -> element.getParameters().get(0))
-                .anyMatch(param -> Object.class.getCanonicalName().equals(((VariableElement) param).asType().toString()));
+                .anyMatch(
+                        param -> Object.class.getCanonicalName().equals(param.asType().toString())
+                );
 
         if (overridesEquals) return;
 
@@ -349,13 +368,9 @@ class ValueGenerator {
                                 TypeName.get(value.getElement().asType())
                         )
                         .addStatement(
-                                "return " + String.join(
-                                        " && ",
-                                        value.getProperties().stream()
-                                                .map(ignore -> "$T.equals(this.$L, that.$L())")
-                                                .collect(Collectors.toList())
-                                ),
-
+                                "return " + value.getProperties().stream()
+                                        .map(ignore -> "$T.equals(this.$L, that.$L())")
+                                        .collect(Collectors.joining(" && ")),
                                 value.getProperties().stream()
                                         .flatMap(
                                                 property -> Stream.of(

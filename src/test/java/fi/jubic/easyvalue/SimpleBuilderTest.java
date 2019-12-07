@@ -44,9 +44,10 @@ public class SimpleBuilderTest {
     @EasyValue
     @JsonDeserialize(as = EasyValue_SimpleBuilderTest_TestUser.class)
     @JsonSerialize(as = EasyValue_SimpleBuilderTest_TestUser.class)
-    static abstract class TestUser {
+    abstract static class TestUser {
         @EasyProperty
         abstract long id();
+
         @EasyProperty
         abstract String name();
 

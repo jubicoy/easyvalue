@@ -4,17 +4,21 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.squareup.javapoet.*;
+import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import fi.jubic.easyvalue.EasyValue;
 
-import javax.annotation.Nullable;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.QualifiedNameable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.QualifiedNameable;
 
 class BuilderGenerator {
     void generateBuilder(
@@ -39,12 +43,19 @@ class BuilderGenerator {
                 EasyValue.class.getName()
         );
         value.getBuilderElement().getAnnotationMirrors().stream()
-                .filter(annotationMirror -> !excludeAnnotations.contains(((QualifiedNameable) annotationMirror.getAnnotationType().asElement()).getQualifiedName().toString()))
+                .filter(
+                        annotationMirror -> !excludeAnnotations.contains(
+                                ((QualifiedNameable) annotationMirror.getAnnotationType()
+                                                .asElement()
+                                ).getQualifiedName().toString()
+                        )
+                )
                 .map(AnnotationSpec::get)
                 .forEach(builderBuilder::addAnnotation);
 
         {
-            JsonIgnoreProperties ignoreProperties = value.getElement().getAnnotation(JsonIgnoreProperties.class);
+            JsonIgnoreProperties ignoreProperties = value.getElement()
+                    .getAnnotation(JsonIgnoreProperties.class);
             if (ignoreProperties != null) {
                 builderBuilder.addAnnotation(
                         AnnotationSpec.get(ignoreProperties)
@@ -280,11 +291,9 @@ class BuilderGenerator {
                 .endControlFlow()
                 .addStatement(
                         "return new $T("
-                                + String.join(
-                                        ", ",
-                                        value.getProperties().stream()
-                                                .map(ignore -> "this.$L")
-                                                .collect(Collectors.toList()))
+                                + value.getProperties().stream()
+                                        .map(ignore -> "this.$L")
+                                        .collect(Collectors.joining(", "))
                                 + ")",
                         Stream.of(
                                 Stream.of(ClassName.bestGuess(value.getGeneratedName())),

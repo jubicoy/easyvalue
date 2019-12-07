@@ -11,7 +11,7 @@ public class NoBuilderClassTest {
     }
 
     @EasyValue(excludeJson = true)
-    static abstract class TestObject {
+    abstract static class TestObject {
         @EasyProperty
         abstract Long value();
 

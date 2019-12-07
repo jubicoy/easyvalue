@@ -8,5 +8,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
 public @interface EasyValue {
+    /**
+     * Set to true to produce JSON (de)serialization code.
+     */
     boolean excludeJson() default false;
 }

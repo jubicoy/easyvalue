@@ -1,9 +1,9 @@
 package fi.jubic.easyvalue.processor;
 
-import javax.tools.Diagnostic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.tools.Diagnostic;
 
 class ProcessingMessage {
     final Diagnostic.Kind kind;

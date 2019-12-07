@@ -47,7 +47,7 @@ public class ObjectMethodOverrideTest {
     }
 
     @EasyValue(excludeJson = true)
-    static abstract class TestObject {
+    abstract static class TestObject {
         @EasyProperty
         abstract Long value();
 
@@ -72,7 +72,7 @@ public class ObjectMethodOverrideTest {
     }
 
     @EasyValue(excludeJson = true)
-    static abstract class ControlObject {
+    abstract static class ControlObject {
         @EasyProperty
         abstract Long value();
 

@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.IOException;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class JsonIgnoreUnknownTest {
     @Test
@@ -29,7 +30,7 @@ public class JsonIgnoreUnknownTest {
     @EasyValue
     @JsonDeserialize(as = EasyValue_JsonIgnoreUnknownTest_TestClassA.class)
     @JsonSerialize(as = EasyValue_JsonIgnoreUnknownTest_TestClassA.class)
-    static abstract class TestClassA {
+    abstract static class TestClassA {
         @EasyProperty
         abstract Long id();
 
@@ -46,7 +47,7 @@ public class JsonIgnoreUnknownTest {
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonDeserialize(as = EasyValue_JsonIgnoreUnknownTest_TestClassB.class)
     @JsonSerialize(as = EasyValue_JsonIgnoreUnknownTest_TestClassB.class)
-    static abstract class TestClassB {
+    abstract static class TestClassB {
         @EasyProperty
         abstract Long id();
 

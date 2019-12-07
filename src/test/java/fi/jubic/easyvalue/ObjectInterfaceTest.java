@@ -31,9 +31,10 @@ public class ObjectInterfaceTest {
     }
 
     @EasyValue
-    static abstract class TestUser {
+    abstract static class TestUser {
         @EasyProperty
         abstract Long id();
+
         @EasyProperty
         abstract String name();
 

@@ -4,10 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.IOException;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CustomNameJsonTest {
     @Test
@@ -31,16 +32,17 @@ public class CustomNameJsonTest {
                 "{\"id\":12,\"n_a_m_e\":\"Stallman\"}",
                 TestUser.class
         );
-        Assert.assertEquals(new Long(12L), user.id());
+        Assert.assertEquals(Long.valueOf(12L), user.id());
         Assert.assertEquals("Stallman", user.name());
     }
 
     @EasyValue
     @JsonDeserialize(as = EasyValue_CustomNameJsonTest_TestUser.class)
     @JsonSerialize(as = EasyValue_CustomNameJsonTest_TestUser.class)
-    static abstract class TestUser {
+    abstract static class TestUser {
         @EasyProperty
         abstract Long id();
+
         @EasyProperty("n_a_m_e")
         abstract String name();
 

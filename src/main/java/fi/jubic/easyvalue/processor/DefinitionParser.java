@@ -5,11 +5,6 @@ import com.squareup.javapoet.TypeVariableName;
 import fi.jubic.easyvalue.EasyProperty;
 import fi.jubic.easyvalue.EasyValue;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -17,6 +12,11 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class DefinitionParser {
     ProcessingResult<ValueDefinition> parseValue(Element element) {

@@ -2,9 +2,10 @@ package fi.jubic.easyvalue;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.junit.jupiter.api.Test;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

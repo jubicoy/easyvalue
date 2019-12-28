@@ -11,14 +11,14 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import fi.jubic.easyvalue.EasyValue;
 
+import javax.annotation.Nullable;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.QualifiedNameable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.QualifiedNameable;
 
 class BuilderGenerator {
     void generateBuilder(

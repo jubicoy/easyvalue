@@ -1,7 +1,7 @@
-package fi.jubic.easyvalue.processor;
+package fi.jubic.easyvalue.legacy.processor;
 
 import com.google.auto.service.AutoService;
-import fi.jubic.easyvalue.EasyValue;
+import fi.jubic.easyvalue.legacy.EasyValue;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Messager;
@@ -21,8 +21,8 @@ import java.util.stream.Stream;
 
 @AutoService(Processor.class)
 @SupportedAnnotationTypes({
-        "fi.jubic.easyvalue.EasyValue",
-        "fi.jubic.easyvalue.EasyProperty"
+        "fi.jubic.easyvalue.legacy.EasyValue",
+        "fi.jubic.easyvalue.legacy.EasyProperty"
 })
 public class EasyValueProcessor extends AbstractProcessor {
     private Messager messager;

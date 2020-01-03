@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue;
+package fi.jubic.easyvalue.legacy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

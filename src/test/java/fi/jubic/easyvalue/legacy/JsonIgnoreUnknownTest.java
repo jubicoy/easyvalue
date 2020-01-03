@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue;
+package fi.jubic.easyvalue.legacy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;

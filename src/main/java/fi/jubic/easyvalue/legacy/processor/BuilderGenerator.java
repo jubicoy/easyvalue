@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue.processor;
+package fi.jubic.easyvalue.legacy.processor;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,7 +9,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import fi.jubic.easyvalue.EasyValue;
+import fi.jubic.easyvalue.legacy.EasyValue;
 
 import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;

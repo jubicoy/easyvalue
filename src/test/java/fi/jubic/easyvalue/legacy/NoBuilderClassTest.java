@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue;
+package fi.jubic.easyvalue.legacy;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue.processor;
+package fi.jubic.easyvalue.legacy.processor;
 
 import javax.annotation.Nullable;
 import java.util.Collections;

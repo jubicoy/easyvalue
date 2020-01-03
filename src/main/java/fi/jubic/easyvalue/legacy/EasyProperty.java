@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue;
+package fi.jubic.easyvalue.legacy;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

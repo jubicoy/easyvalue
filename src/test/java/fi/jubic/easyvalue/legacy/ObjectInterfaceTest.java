@@ -1,5 +1,6 @@
-package fi.jubic.easyvalue;
+package fi.jubic.easyvalue.legacy;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -8,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 class ObjectInterfaceTest {
     @Test
     void handlesValueEquality() {
-        assertEquals(
+        Assertions.assertEquals(
                 TestUser.builder()
                         .setId(10L)
                         .setName("RMS")
@@ -19,7 +20,7 @@ class ObjectInterfaceTest {
                         .build()
         );
 
-        assertNotEquals(
+        Assertions.assertNotEquals(
                 TestUser.builder()
                         .setId(11L)
                         .setName("RMS")
@@ -29,7 +30,7 @@ class ObjectInterfaceTest {
                         .setName("RMS")
                         .build()
         );
-        assertNotEquals(
+        Assertions.assertNotEquals(
                 TestUser.builder()
                         .setId(10L)
                         .setName("Richard")

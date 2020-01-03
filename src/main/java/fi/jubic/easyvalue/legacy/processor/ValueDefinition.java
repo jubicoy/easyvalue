@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue.processor;
+package fi.jubic.easyvalue.legacy.processor;
 
 import com.squareup.javapoet.TypeVariableName;
 

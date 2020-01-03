@@ -1,9 +1,9 @@
-package fi.jubic.easyvalue.processor;
+package fi.jubic.easyvalue.legacy.processor;
 
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
-import fi.jubic.easyvalue.EasyProperty;
-import fi.jubic.easyvalue.EasyValue;
+import fi.jubic.easyvalue.legacy.EasyProperty;
+import fi.jubic.easyvalue.legacy.EasyValue;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;

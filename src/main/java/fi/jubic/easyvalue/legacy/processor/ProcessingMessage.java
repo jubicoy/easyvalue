@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue.processor;
+package fi.jubic.easyvalue.legacy.processor;
 
 import javax.tools.Diagnostic;
 import java.util.ArrayList;

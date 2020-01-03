@@ -1,4 +1,4 @@
-package fi.jubic.easyvalue;
+package fi.jubic.easyvalue.legacy;
 
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ class ObjectMethodOverrideTest {
 
         ControlObject control = ControlObject.of(23L);
         assertEquals(
-                "fi.jubic.easyvalue.ObjectMethodOverrideTest.ControlObject{value=23}",
+                "fi.jubic.easyvalue.legacy.ObjectMethodOverrideTest.ControlObject{value=23}",
                 control.toString()
         );
     }

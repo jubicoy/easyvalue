@@ -363,9 +363,9 @@ class ValueGenerator {
                                 )
                         )
                         .addStatement(
-                                "$T that = ($T) o",
-                                TypeName.get(value.getElement().asType()),
-                                TypeName.get(value.getElement().asType())
+                                "$L that = ($L) o",
+                                value.getGeneratedName(),
+                                value.getGeneratedName()
                         )
                         .addStatement(
                                 "return " + value.getProperties().stream()

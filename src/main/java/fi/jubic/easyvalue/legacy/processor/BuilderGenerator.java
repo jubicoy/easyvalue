@@ -7,8 +7,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeVariableName;
 import fi.jubic.easyvalue.legacy.EasyValue;
 
 import javax.annotation.Nullable;
@@ -137,7 +139,12 @@ class BuilderGenerator {
                 .returns(TypeName.get(value.getBuilderElement().asType()))
                 .addStatement(
                         "$L builder = new $T()",
-                        "Builder",
+                        value.getTypeVariables().isEmpty()
+                                ? "Builder"
+                                : ParameterizedTypeName.get(
+                                        ClassName.bestGuess("Builder"),
+                                        value.getTypeVariables().toArray(new TypeName[0])
+                                ),
                         TypeName.get(value.getBuilderElement().asType())
                 );
 
@@ -191,7 +198,12 @@ class BuilderGenerator {
 
         setterBuilder.addStatement(
                 "$L builder = new $T()",
-                "Builder",
+                value.getTypeVariables().isEmpty()
+                        ? "Builder"
+                        : ParameterizedTypeName.get(
+                                ClassName.bestGuess("Builder"),
+                                value.getTypeVariables().toArray(new TypeName[0])
+                        ),
                 TypeName.get(value.getBuilderElement().asType())
         );
 
@@ -282,6 +294,17 @@ class BuilderGenerator {
                                 .endControlFlow()
                 );
 
+        TypeName valueConstructorType;
+        if (value.getTypeVariables().isEmpty()) {
+            valueConstructorType = ClassName.bestGuess(value.getGeneratedName());
+        }
+        else {
+            valueConstructorType = ParameterizedTypeName.get(
+                    ClassName.bestGuess(value.getGeneratedName()),
+                    value.getTypeVariables().toArray(new TypeVariableName[0])
+            );
+        }
+
         buildBuilder
                 .beginControlFlow("if (!missing.isEmpty())")
                 .addStatement(
@@ -296,7 +319,7 @@ class BuilderGenerator {
                                         .collect(Collectors.joining(", "))
                                 + ")",
                         Stream.of(
-                                Stream.of(ClassName.bestGuess(value.getGeneratedName())),
+                                Stream.of(valueConstructorType),
                                 value.getProperties().stream()
                                         .map(PropertyDefinition::getName)
                         )

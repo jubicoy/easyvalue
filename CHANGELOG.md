@@ -11,6 +11,9 @@ and this project adheres poorly to [Semantic Versioning](https://semver.org/spec
 ### Changed
 - Moved original implementation to `legacy` package.
 
+### Fixed
+- Fix unchecked casts in generic value builders.
+
 ## [0.2.10] - 2019-12-28
 ### Changed
 - Use com.google.code.findbugs:annotations instead of com.google.code.findbugs:jsr305.

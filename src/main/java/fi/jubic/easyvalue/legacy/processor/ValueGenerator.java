@@ -107,11 +107,7 @@ class ValueGenerator {
         generateHashCode(definition, classBuilder);
 
         if (hasBuilder) {
-            new BuilderGenerator()
-                    .generateBuilder(
-                            definition,
-                            classBuilder
-                    );
+            new BuilderGenerator().generateBuilder(definition, classBuilder);
         }
 
         try {

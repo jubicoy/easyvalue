@@ -270,7 +270,8 @@ class BuilderGenerator {
                 .returns(TypeName.get(value.getElement().asType()))
                 .addStatement("$T missing = \"\"", String.class);
 
-        value.getProperties().stream()
+        value.getProperties()
+                .stream()
                 .filter(property -> property.getElement().getAnnotation(Nullable.class) == null)
                 .filter(property -> !property.getType().getKind().isPrimitive())
                 .forEach(

@@ -14,6 +14,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.QualifiedNameable;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 class BuilderGenerator {
@@ -45,6 +46,7 @@ class BuilderGenerator {
                 property -> generateField(property, builderBuilder)
         );
         generateConstructors(value, builderBuilder);
+        generateDefaultGenerator(value, builderBuilder);
         generateFromSource(value, builderBuilder);
         value.getProperties().forEach(
                 property -> generateSetter(property, value, builderBuilder)
@@ -99,6 +101,23 @@ class BuilderGenerator {
                 .addMethod(
                         constructorBuilder.build()
                 );
+    }
+
+    private void generateDefaultGenerator(
+            ValueDefinition value,
+            TypeSpec.Builder builderBuilder
+    ) {
+        builderBuilder.addMethod(
+                MethodSpec.methodBuilder("defaults")
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(TypeName.get(value.getBuilderElement().asType()))
+                        .addParameter(
+                                TypeName.get(value.getBuilderElement().asType()),
+                                "builder"
+                        )
+                        .addStatement("return builder")
+                        .build()
+        );
     }
 
     private void generateFromSource(
@@ -268,7 +287,17 @@ class BuilderGenerator {
         MethodSpec.Builder buildBuilder = MethodSpec.methodBuilder("build")
                 .addModifiers(Modifier.PUBLIC)
                 .returns(TypeName.get(value.getElement().asType()))
-                .addStatement("$T missing = \"\"", String.class);
+                .addStatement("$T missing = \"\"", String.class)
+                .addStatement(
+                        "$L defaults = defaults(new $T())",
+                        value.getTypeVariables().isEmpty()
+                                ? "Builder"
+                                : ParameterizedTypeName.get(
+                                ClassName.bestGuess("Builder"),
+                                value.getTypeVariables().toArray(new TypeName[0])
+                        ),
+                        TypeName.get(value.getBuilderElement().asType())
+                );
 
         value.getProperties()
                 .stream()
@@ -277,7 +306,8 @@ class BuilderGenerator {
                 .forEach(
                         property -> buildBuilder
                                 .beginControlFlow(
-                                        "if (this.$L == null)",
+                                        "if (this.$L == null && defaults.$L == null)",
+                                        property.getName(),
                                         property.getName()
                                 )
                                 .addStatement(
@@ -308,13 +338,25 @@ class BuilderGenerator {
                 .addStatement(
                         "return new $T("
                                 + value.getProperties().stream()
-                                        .map(ignore -> "this.$L")
+                                        .map(prop -> {
+                                            if (prop.getType().getKind().isPrimitive()) {
+                                                return "this.$L";
+                                            }
+                                            return "this.$L != null ? this.$L : defaults.$L";
+                                        })
                                         .collect(Collectors.joining(", "))
                                 + ")",
                         Stream.of(
                                 Stream.of(valueConstructorType),
                                 value.getProperties().stream()
-                                        .map(PropertyDefinition::getName)
+                                        .flatMap(prop -> {
+                                            if (prop.getType().getKind().isPrimitive()) {
+                                                return Stream.of(prop.getName());
+                                            }
+                                            return IntStream.range(0, 3)
+                                                            .boxed()
+                                                            .map(ignore -> prop.getName());
+                                        })
                         )
                                 .flatMap(s -> s)
                                 .toArray()

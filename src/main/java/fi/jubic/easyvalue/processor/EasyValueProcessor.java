@@ -42,7 +42,10 @@ public class EasyValueProcessor extends AbstractProcessor {
         List<ProcessingResult<ValueDefinition>> definitionResults = roundEnvironment
                 .getElementsAnnotatedWith(EasyValue.class)
                 .stream()
-                .map(definitionParser::parseValue)
+                .map(value -> definitionParser.parseValue(
+                        processingEnv,
+                        value
+                ))
                 .collect(Collectors.toList());
 
         List<ProcessingMessage> messages = definitionResults.stream()

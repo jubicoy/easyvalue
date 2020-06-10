@@ -3,11 +3,14 @@ package fi.jubic.easyvalue.processor;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +26,10 @@ class DefinitionParser {
             "^(get|is)([A-Z0-9].*)$"
     );
 
-    ProcessingResult<ValueDefinition> parseValue(Element element) {
+    ProcessingResult<ValueDefinition> parseValue(
+            ProcessingEnvironment processingEnv,
+            Element element
+    ) {
         if (element.getKind() != ElementKind.CLASS) {
             return ProcessingResult.of(
                     ProcessingMessage.of(
@@ -84,12 +90,35 @@ class DefinitionParser {
                             if (!match) {
                                 return Optional.<PropertyDefinition>empty();
                             }
+
+                            TypeMirror typeArgument = null;
+                            boolean optional = false;
+                            if (elem.getReturnType() instanceof DeclaredType) {
+                                DeclaredType returnType = (DeclaredType) elem.getReturnType();
+                                typeArgument = returnType.getTypeArguments().size() == 1
+                                        ? returnType.getTypeArguments().get(0)
+                                        : null;
+
+                                TypeMirror optionalType = processingEnv.getTypeUtils().erasure(
+                                        processingEnv.getElementUtils()
+                                                .getTypeElement(Optional.class.getCanonicalName())
+                                                .asType()
+                                );
+                                optional = processingEnv.getTypeUtils()
+                                        .isAssignable(
+                                                returnType,
+                                                optionalType
+                                        );
+                            }
+
                             return Optional.of(
                                     new PropertyDefinition(
                                             elem,
                                             matcher.group(2).substring(0, 1).toLowerCase()
                                                     + matcher.group(2).substring(1),
-                                            elem.getReturnType()
+                                            elem.getReturnType(),
+                                            typeArgument,
+                                            optional
                                     )
                             );
                         })

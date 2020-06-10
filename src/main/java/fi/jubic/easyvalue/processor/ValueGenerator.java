@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -143,12 +144,25 @@ class ValueGenerator {
             PropertyDefinition property,
             TypeSpec.Builder classBuilder
     ) {
-        classBuilder.addField(
-                TypeName.get(property.getType()),
-                property.getName(),
-                Modifier.PRIVATE,
-                Modifier.FINAL
-        );
+        if (property.isOptional()) {
+            classBuilder.addField(
+                    TypeName.get(
+                            property.getTypeArgument()
+                                    .orElseThrow(IllegalStateException::new)
+                    ),
+                    property.getName(),
+                    Modifier.PRIVATE,
+                    Modifier.FINAL
+            );
+        }
+        else {
+            classBuilder.addField(
+                    TypeName.get(property.getType()),
+                    property.getName(),
+                    Modifier.PRIVATE,
+                    Modifier.FINAL
+            );
+        }
     }
 
     private void generateConstructor(
@@ -159,10 +173,24 @@ class ValueGenerator {
                 .addModifiers(Modifier.PUBLIC);
 
         value.getProperties().forEach(
-                property -> constructorBuilder.addParameter(
-                        TypeName.get(property.getType()),
-                        property.getName()
-                )
+                property -> {
+                    if (property.isOptional()) {
+                        constructorBuilder.addParameter(
+                                TypeName.get(
+                                        property.getTypeArgument()
+                                                .orElseThrow(IllegalStateException::new)
+                                ),
+                                property.getName()
+                        );
+                    }
+                    else {
+                        constructorBuilder.addParameter(
+                                TypeName.get(property.getType()),
+                                property.getName()
+                        );
+                    }
+
+                }
         );
 
         value.getProperties().forEach(
@@ -181,11 +209,22 @@ class ValueGenerator {
             TypeSpec.Builder classBuilder
     ) {
         MethodSpec.Builder accessorBuilder = MethodSpec
-                .overriding((ExecutableElement) property.getElement())
-                .addStatement(
-                        "return $L",
-                        property.getName()
-                );
+                .overriding((ExecutableElement) property.getElement());
+
+        if (property.isOptional()) {
+            accessorBuilder.addStatement(
+                    "return $T.ofNullable($L)",
+                    ClassName.get(Optional.class),
+                    property.getName()
+            );
+        }
+        else {
+            accessorBuilder.addStatement(
+                    "return $L",
+                    property.getName()
+            );
+        }
+
         classBuilder.addMethod(accessorBuilder.build());
     }
 
@@ -266,10 +305,10 @@ class ValueGenerator {
                         .returns(ClassName.get(String.class))
                         .addStatement(
                                 "return \"$L{\""
-                                + value.getProperties().stream()
+                                        + value.getProperties().stream()
                                         .map(ignore -> "+ \"$L=\" + $L")
                                         .collect(Collectors.joining(" + \", \""))
-                                + "+ \"}\"",
+                                        + "+ \"}\"",
                                 Stream.of(
                                         Stream.of(value.getElement().getQualifiedName().toString()),
                                         value.getProperties().stream()

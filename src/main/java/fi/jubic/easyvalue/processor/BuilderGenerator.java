@@ -3,6 +3,7 @@ package fi.jubic.easyvalue.processor;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
@@ -12,9 +13,9 @@ import fi.jubic.easyvalue.EasyValue;
 import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.QualifiedNameable;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 class BuilderGenerator {
@@ -63,11 +64,23 @@ class BuilderGenerator {
             PropertyDefinition property,
             TypeSpec.Builder builderBuilder
     ) {
-        builderBuilder.addField(
-                TypeName.get(property.getType()),
-                property.getName(),
-                Modifier.PRIVATE
-        );
+        if (property.isOptional()) {
+            builderBuilder.addField(
+                    TypeName.get(
+                            property.getTypeArgument()
+                                    .orElseThrow(IllegalStateException::new)
+                    ),
+                    property.getName(),
+                    Modifier.PRIVATE
+            );
+        }
+        else {
+            builderBuilder.addField(
+                    TypeName.get(property.getType()),
+                    property.getName(),
+                    Modifier.PRIVATE
+            );
+        }
     }
 
     private void generateConstructors(
@@ -78,10 +91,23 @@ class BuilderGenerator {
                 .addModifiers(Modifier.PRIVATE);
 
         value.getProperties().forEach(
-                property -> constructorBuilder.addParameter(
-                        TypeName.get(property.getType()),
-                        property.getName()
-                )
+                property -> {
+                    if (property.isOptional()) {
+                        constructorBuilder.addParameter(
+                                TypeName.get(
+                                        property.getTypeArgument()
+                                                .orElseThrow(IllegalStateException::new)
+                                ),
+                                property.getName()
+                        );
+                    }
+                    else {
+                        constructorBuilder.addParameter(
+                                TypeName.get(property.getType()),
+                                property.getName()
+                        );
+                    }
+                }
         );
 
         value.getProperties().forEach(
@@ -146,7 +172,9 @@ class BuilderGenerator {
         value.getProperties().forEach(
                 property -> fromSourceBuilder
                         .addStatement(
-                                "builder.$L = source.$L()",
+                                property.isOptional()
+                                        ? "builder.$L = source.$L().orElse(null)"
+                                        : "builder.$L = source.$L()",
                                 property.getName(),
                                 property.getElement()
                                         .getSimpleName()
@@ -175,21 +203,39 @@ class BuilderGenerator {
 
         MethodSpec.Builder setterBuilder = MethodSpec.methodBuilder(setterName)
                 .addModifiers(Modifier.PUBLIC)
-                .returns(TypeName.get(value.getBuilderElement().asType()))
-                .addParameter(
-                        TypeName.get(property.getType()),
-                        property.getName()
-                )
-                .addStatement(
-                        "$L builder = new $T()",
-                        value.getTypeVariables().isEmpty()
-                                ? "Builder"
-                                : ParameterizedTypeName.get(
-                                        ClassName.bestGuess("Builder"),
-                                        value.getTypeVariables().toArray(new TypeName[0])
-                                ),
-                        TypeName.get(value.getBuilderElement().asType())
-                );
+                .returns(TypeName.get(value.getBuilderElement().asType()));
+
+        if (property.isOptional()) {
+            setterBuilder.addParameter(
+                    ParameterSpec
+                            .builder(
+                                    TypeName.get(
+                                            property.getTypeArgument()
+                                                    .orElseThrow(IllegalStateException::new)
+                                    ),
+                                    property.getName()
+                            )
+                            .addAnnotation(Nullable.class)
+                            .build()
+            );
+        }
+        else {
+            setterBuilder.addParameter(
+                    TypeName.get(property.getType()),
+                    property.getName()
+            );
+        }
+
+        setterBuilder.addStatement(
+                "$L builder = new $T()",
+                value.getTypeVariables().isEmpty()
+                        ? "Builder"
+                        : ParameterizedTypeName.get(
+                                ClassName.bestGuess("Builder"),
+                                value.getTypeVariables().toArray(new TypeName[0])
+                        ),
+                TypeName.get(value.getBuilderElement().asType())
+        );
 
         if (
                 property.getElement().getAnnotation(Nullable.class) == null
@@ -246,16 +292,34 @@ class BuilderGenerator {
                 )
                 .addAnnotation(Deprecated.class)
                 .addModifiers(Modifier.PUBLIC)
-                .returns(TypeName.get(value.getBuilderElement().asType()))
-                .addParameter(
-                        TypeName.get(property.getType()),
-                        property.getName()
-                )
-                .addStatement(
-                        "return $L($L)",
-                        setterName,
-                        property.getName()
-                );
+                .returns(TypeName.get(value.getBuilderElement().asType()));
+
+        if (property.isOptional()) {
+            witherBuilder.addParameter(
+                    ParameterSpec
+                            .builder(
+                                    TypeName.get(
+                                            property.getTypeArgument()
+                                                    .orElseThrow(IllegalStateException::new)
+                                    ),
+                                    property.getName()
+                            )
+                            .addAnnotation(Nullable.class)
+                            .build()
+            );
+        }
+        else {
+            witherBuilder.addParameter(
+                    TypeName.get(property.getType()),
+                    property.getName()
+            );
+        }
+
+        witherBuilder.addStatement(
+                "return $L($L)",
+                setterName,
+                property.getName()
+        );
 
         property.getElement().getAnnotationMirrors().stream()
                 .map(AnnotationSpec::get)
@@ -268,16 +332,26 @@ class BuilderGenerator {
             PropertyDefinition property,
             TypeSpec.Builder builderBuilder
     ) {
-        builderBuilder.addMethod(
-                MethodSpec.methodBuilder(property.getElement().getSimpleName().toString())
-                        .addModifiers(Modifier.PROTECTED)
-                        .returns(TypeName.get(property.getType()))
-                        .addStatement(
-                                "return this.$L",
-                                property.getName()
-                        )
-                        .build()
-        );
+        MethodSpec.Builder accessorBuilder = MethodSpec
+                .methodBuilder(property.getElement().getSimpleName().toString())
+                .addModifiers(Modifier.PROTECTED)
+                .returns(TypeName.get(property.getType()));
+
+        if (property.isOptional()) {
+            accessorBuilder.addStatement(
+                    "return $T.ofNullable($L)",
+                    ClassName.get(Optional.class),
+                    property.getName()
+            );
+        }
+        else {
+            accessorBuilder.addStatement(
+                    "return $L",
+                    property.getName()
+            );
+        }
+
+        builderBuilder.addMethod(accessorBuilder.build());
     }
 
     private void generateBuild(
@@ -336,26 +410,39 @@ class BuilderGenerator {
                 )
                 .endControlFlow()
                 .addStatement(
-                        "return new $T("
-                                + value.getProperties().stream()
+                        "return new $T(\n"
+                                + value.getProperties()
+                                        .stream()
                                         .map(prop -> {
                                             if (prop.getType().getKind().isPrimitive()) {
                                                 return "this.$L";
                                             }
+                                            if (prop.isOptional()) {
+                                                return "Optional.ofNullable(this.$L)"
+                                                        + ".orElseGet("
+                                                        + "() -> Optional.ofNullable(defaults.$L)"
+                                                        + ".orElse(null))";
+                                            }
                                             return "this.$L != null ? this.$L : defaults.$L";
                                         })
-                                        .collect(Collectors.joining(", "))
-                                + ")",
+                                        .collect(Collectors.joining(",\n"))
+                                + "\n)",
                         Stream.of(
                                 Stream.of(valueConstructorType),
                                 value.getProperties().stream()
                                         .flatMap(prop -> {
+                                            int n;
                                             if (prop.getType().getKind().isPrimitive()) {
-                                                return Stream.of(prop.getName());
+                                                n = 1;
                                             }
-                                            return IntStream.range(0, 3)
-                                                            .boxed()
-                                                            .map(ignore -> prop.getName());
+                                            else if (prop.isOptional()) {
+                                                n = 2;
+                                            }
+                                            else {
+                                                n = 3;
+                                            }
+                                            return Stream.generate(prop::getName)
+                                                    .limit(n);
                                         })
                         )
                                 .flatMap(s -> s)

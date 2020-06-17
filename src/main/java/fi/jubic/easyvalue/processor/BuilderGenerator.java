@@ -13,6 +13,8 @@ import fi.jubic.easyvalue.EasyValue;
 import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.QualifiedNameable;
+import javax.lang.model.type.TypeKind;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -110,13 +112,50 @@ class BuilderGenerator {
                 }
         );
 
-        value.getProperties().forEach(
-                property -> constructorBuilder.addStatement(
-                        "this.$L = $L",
-                        property.getName(),
-                        property.getName()
+        value.getProperties()
+                .stream()
+                .filter(property -> property.getType().getKind() != TypeKind.ARRAY
+                        && (!property.isOptional()
+                        || property.getTypeArgument()
+                        .orElseThrow(IllegalStateException::new)
+                        .getKind() != TypeKind.ARRAY)
                 )
-        );
+                .forEach(
+                        property -> constructorBuilder.addStatement(
+                                "this.$L = $L",
+                                property.getName(),
+                                property.getName()
+                        )
+                );
+
+        value.getProperties()
+                .stream()
+                .filter(property -> property.getType().getKind() == TypeKind.ARRAY
+                        || (property.isOptional()
+                        && property.getTypeArgument()
+                        .orElseThrow(IllegalStateException::new)
+                        .getKind() == TypeKind.ARRAY)
+                )
+                .forEach(
+                        property -> constructorBuilder
+                                .beginControlFlow(
+                                        "if ($L != null)",
+                                        property.getName()
+                                )
+                                .addStatement(
+                                        "this.$L = $T.copyOf($L, $L.length)",
+                                        property.getName(),
+                                        ClassName.get(Arrays.class),
+                                        property.getName(),
+                                        property.getName()
+                                )
+                                .nextControlFlow("else")
+                                .addStatement(
+                                        "this.$L = null",
+                                        property.getName()
+                                )
+                                .endControlFlow()
+                );
 
         builderBuilder
                 .addMethod(
@@ -338,17 +377,49 @@ class BuilderGenerator {
                 .returns(TypeName.get(property.getType()));
 
         if (property.isOptional()) {
-            accessorBuilder.addStatement(
-                    "return $T.ofNullable($L)",
-                    ClassName.get(Optional.class),
-                    property.getName()
-            );
+            boolean isArray = property.getTypeArgument()
+                    .orElseThrow(IllegalStateException::new)
+                    .getKind() == TypeKind.ARRAY;
+            if (isArray) {
+                accessorBuilder.addStatement(
+                        "return $T.ofNullable($L).map(val -> $T.copyOf(val, val.length))",
+                        ClassName.get(Optional.class),
+                        property.getName(),
+                        ClassName.get(Arrays.class)
+                );
+            }
+            else {
+                accessorBuilder.addStatement(
+                        "return $T.ofNullable($L)",
+                        ClassName.get(Optional.class),
+                        property.getName()
+                );
+            }
         }
         else {
-            accessorBuilder.addStatement(
-                    "return $L",
-                    property.getName()
-            );
+            boolean isArray = property.getType()
+                    .getKind() == TypeKind.ARRAY;
+            if (isArray) {
+                accessorBuilder
+                        .beginControlFlow(
+                                "if ($L == null)",
+                                property.getName()
+                        )
+                        .addStatement("return null")
+                        .endControlFlow()
+                        .addStatement(
+                                "return $T.copyOf($L, $L.length)",
+                                ClassName.get(Arrays.class),
+                                property.getName(),
+                                property.getName()
+                        );
+            }
+            else {
+                accessorBuilder.addStatement(
+                        "return $L",
+                        property.getName()
+                );
+            }
         }
 
         builderBuilder.addMethod(accessorBuilder.build());
@@ -375,6 +446,7 @@ class BuilderGenerator {
 
         value.getProperties()
                 .stream()
+                .filter(property -> !property.isOptional())
                 .filter(property -> property.getElement().getAnnotation(Nullable.class) == null)
                 .filter(property -> !property.getType().getKind().isPrimitive())
                 .forEach(

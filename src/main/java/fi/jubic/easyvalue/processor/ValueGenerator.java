@@ -2,6 +2,7 @@ package fi.jubic.easyvalue.processor;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -18,12 +19,12 @@ import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 class ValueGenerator {
     private final ProcessingEnvironment processingEnv;
@@ -193,13 +194,50 @@ class ValueGenerator {
                 }
         );
 
-        value.getProperties().forEach(
-                property -> constructorBuilder.addStatement(
-                        "this.$L = $L",
-                        property.getName(),
-                        property.getName()
+        value.getProperties()
+                .stream()
+                .filter(property -> property.getType().getKind() != TypeKind.ARRAY
+                        && (!property.isOptional()
+                        || property.getTypeArgument()
+                        .orElseThrow(IllegalStateException::new)
+                        .getKind() != TypeKind.ARRAY)
                 )
-        );
+                .forEach(
+                        property -> constructorBuilder.addStatement(
+                                "this.$L = $L",
+                                property.getName(),
+                                property.getName()
+                        )
+                );
+
+        value.getProperties()
+                .stream()
+                .filter(property -> property.getType().getKind() == TypeKind.ARRAY
+                        || (property.isOptional()
+                        && property.getTypeArgument()
+                        .orElseThrow(IllegalStateException::new)
+                        .getKind() == TypeKind.ARRAY)
+                )
+                .forEach(
+                        property -> constructorBuilder
+                                .beginControlFlow(
+                                        "if ($L != null)",
+                                        property.getName()
+                                )
+                                .addStatement(
+                                        "this.$L = $T.copyOf($L, $L.length)",
+                                        property.getName(),
+                                        ClassName.get(Arrays.class),
+                                        property.getName(),
+                                        property.getName()
+                                )
+                                .nextControlFlow("else")
+                                .addStatement(
+                                        "this.$L = null",
+                                        property.getName()
+                                )
+                                .endControlFlow()
+                );
 
         classBuilder.addMethod(constructorBuilder.build());
     }
@@ -212,17 +250,49 @@ class ValueGenerator {
                 .overriding((ExecutableElement) property.getElement());
 
         if (property.isOptional()) {
-            accessorBuilder.addStatement(
-                    "return $T.ofNullable($L)",
-                    ClassName.get(Optional.class),
-                    property.getName()
-            );
+            boolean isArray = property.getTypeArgument()
+                    .orElseThrow(IllegalStateException::new)
+                    .getKind() == TypeKind.ARRAY;
+            if (isArray) {
+                accessorBuilder.addStatement(
+                        "return $T.ofNullable($L).map(val -> $T.copyOf(val, val.length))",
+                        ClassName.get(Optional.class),
+                        property.getName(),
+                        ClassName.get(Arrays.class)
+                );
+            }
+            else {
+                accessorBuilder.addStatement(
+                        "return $T.ofNullable($L)",
+                        ClassName.get(Optional.class),
+                        property.getName()
+                );
+            }
         }
         else {
-            accessorBuilder.addStatement(
-                    "return $L",
-                    property.getName()
-            );
+            boolean isArray = property.getType()
+                    .getKind() == TypeKind.ARRAY;
+            if (isArray) {
+                accessorBuilder
+                        .beginControlFlow(
+                                "if ($L == null)",
+                                property.getName()
+                        )
+                        .addStatement("return null")
+                        .endControlFlow()
+                        .addStatement(
+                                "return $T.copyOf($L, $L.length)",
+                                ClassName.get(Arrays.class),
+                                property.getName(),
+                                property.getName()
+                        );
+            }
+            else {
+                accessorBuilder.addStatement(
+                        "return $L",
+                        property.getName()
+                );
+            }
         }
 
         classBuilder.addMethod(accessorBuilder.build());
@@ -304,21 +374,33 @@ class ValueGenerator {
                         .addModifiers(Modifier.PUBLIC)
                         .returns(ClassName.get(String.class))
                         .addStatement(
-                                "return \"$L{\""
-                                        + value.getProperties().stream()
-                                        .map(ignore -> "+ \"$L=\" + $L")
-                                        .collect(Collectors.joining(" + \", \""))
-                                        + "+ \"}\"",
-                                Stream.of(
-                                        Stream.of(value.getElement().getQualifiedName().toString()),
-                                        value.getProperties().stream()
-                                                .flatMap(property -> Stream.of(
+                                value.getProperties()
+                                        .stream()
+                                        .filter(property -> property.getType()
+                                                .getKind() != TypeKind.ARRAY
+                                        )
+                                        .reduce(
+                                                CodeBlock.builder()
+                                                        .add(
+                                                                "return \"$L{\"",
+                                                                value.getElement()
+                                                                        .getQualifiedName()
+                                                                        .toString()
+                                                        ),
+                                                (block, property) -> block.add(
+                                                        (block.toString().contains(",")
+                                                                ? "+ \", \" + "
+                                                                : " + ")
+                                                                + "\"$L=\" + $L",
                                                         property.getName(),
                                                         property.getName()
-                                                ))
-                                )
-                                        .flatMap(s -> s)
-                                        .toArray()
+                                                ),
+                                                (a, b) -> {
+                                                    throw new IllegalStateException();
+                                                }
+                                        )
+                                        .add("+ \"}\"")
+                                        .build()
                         )
                         .build()
         );
@@ -355,36 +437,45 @@ class ValueGenerator {
                         )
                         .endControlFlow()
                         .beginControlFlow(
-                                "if (o instanceof $T)",
+                                "if (!(o instanceof $T))",
                                 ClassName.bestGuess(
                                         value.getElement()
                                                 .getQualifiedName()
                                                 .toString()
                                 )
                         )
+                        .addStatement("return false")
+                        .endControlFlow()
                         .addStatement(
                                 "$L that = ($L) o",
                                 value.getGeneratedName(),
                                 value.getGeneratedName()
                         )
                         .addStatement(
-                                "return " + value.getProperties().stream()
-                                        .map(ignore -> "$T.equals(this.$L, that.$L())")
-                                        .collect(Collectors.joining(" && ")),
-                                value.getProperties().stream()
-                                        .flatMap(
-                                                property -> Stream.of(
-                                                        ClassName.get(Objects.class),
+                                value.getProperties()
+                                        .stream()
+                                        .reduce(
+                                                CodeBlock.builder(),
+                                                (block, property) -> block.add(
+                                                        (block.isEmpty()
+                                                                ? "return "
+                                                                : "\n&& ")
+                                                                + "$T.equals(this.$L, that.$L())",
+                                                        property.getType()
+                                                                .getKind() == TypeKind.ARRAY
+                                                                ? ClassName.get(Arrays.class)
+                                                                : ClassName.get(Objects.class),
                                                         property.getName(),
                                                         property.getElement()
                                                                 .getSimpleName()
                                                                 .toString()
-                                                )
+                                                ),
+                                                (a, b) -> {
+                                                    throw new IllegalStateException();
+                                                }
                                         )
-                                        .toArray()
+                                        .build()
                         )
-                        .endControlFlow()
-                        .addStatement("return false")
                         .build()
         );
     }

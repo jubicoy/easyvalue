@@ -78,7 +78,9 @@ class BuilderGenerator {
         }
         else {
             builderBuilder.addField(
-                    TypeName.get(property.getType()),
+                    property.getType().getKind().isPrimitive()
+                        ? TypeName.get(property.getType()).box()
+                        : TypeName.get(property.getType()),
                     property.getName(),
                     Modifier.PRIVATE
             );
@@ -374,7 +376,11 @@ class BuilderGenerator {
         MethodSpec.Builder accessorBuilder = MethodSpec
                 .methodBuilder(property.getElement().getSimpleName().toString())
                 .addModifiers(Modifier.PROTECTED)
-                .returns(TypeName.get(property.getType()));
+                .returns(
+                        property.getType().getKind().isPrimitive()
+                            ? TypeName.get(property.getType()).box()
+                            : TypeName.get(property.getType())
+                );
 
         if (property.isOptional()) {
             boolean isArray = property.getTypeArgument()
@@ -448,7 +454,6 @@ class BuilderGenerator {
                 .stream()
                 .filter(property -> !property.isOptional())
                 .filter(property -> property.getElement().getAnnotation(Nullable.class) == null)
-                .filter(property -> !property.getType().getKind().isPrimitive())
                 .forEach(
                         property -> buildBuilder
                                 .beginControlFlow(
@@ -486,9 +491,6 @@ class BuilderGenerator {
                                 + value.getProperties()
                                         .stream()
                                         .map(prop -> {
-                                            if (prop.getType().getKind().isPrimitive()) {
-                                                return "this.$L";
-                                            }
                                             if (prop.isOptional()) {
                                                 return "Optional.ofNullable(this.$L)"
                                                         + ".orElseGet("
@@ -504,10 +506,7 @@ class BuilderGenerator {
                                 value.getProperties().stream()
                                         .flatMap(prop -> {
                                             int n;
-                                            if (prop.getType().getKind().isPrimitive()) {
-                                                n = 1;
-                                            }
-                                            else if (prop.isOptional()) {
+                                            if (prop.isOptional()) {
                                                 n = 2;
                                             }
                                             else {

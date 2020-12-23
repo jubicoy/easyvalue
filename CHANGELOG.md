@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres poorly to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.3.1] - 2020-12-23
 ### Fixed
 - Fix missing check and defaults for primitive properties. Previously defaults were ignored for primitive values and the "reasonable defaults" were used instead for unset properties.
 

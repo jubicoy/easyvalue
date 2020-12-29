@@ -7,6 +7,7 @@ and this project adheres poorly to [Semantic Versioning](https://semver.org/spec
 ## [Unreleased]
 ### Security
 - Update dependencies.
+- Suppress CVE-2020-8908 in dependency check.
 
 ## [1.3.1] - 2020-12-23
 ### Fixed

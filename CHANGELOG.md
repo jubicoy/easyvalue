@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres poorly to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- Update dependencies.
+- Suppress CVE-2020-8908 in dependency check.
 
 ## [1.3.1] - 2020-12-23
 ### Fixed

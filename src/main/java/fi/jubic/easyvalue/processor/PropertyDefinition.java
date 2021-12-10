@@ -11,20 +11,20 @@ class PropertyDefinition {
     private final TypeMirror type;
     @Nullable
     private final TypeMirror typeArgument;
-    private final boolean optional;
+    private final PropertyKind propertyKind;
 
     PropertyDefinition(
             Element element,
             String name,
             TypeMirror type,
             @Nullable TypeMirror typeArgument,
-            boolean optional
+            PropertyKind propertyKind
     ) {
         this.element = element;
         this.name = name;
         this.type = type;
         this.typeArgument = typeArgument;
-        this.optional = optional;
+        this.propertyKind = propertyKind;
     }
 
     Element getElement() {
@@ -43,7 +43,12 @@ class PropertyDefinition {
         return Optional.ofNullable(typeArgument);
     }
 
+    PropertyKind getPropertyKind() {
+        return propertyKind;
+    }
+
     boolean isOptional() {
-        return optional;
+        return propertyKind == PropertyKind.OPTIONAL
+                || propertyKind == PropertyKind.OPTIONAL_ARRAY;
     }
 }

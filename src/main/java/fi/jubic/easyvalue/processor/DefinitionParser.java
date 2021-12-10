@@ -10,6 +10,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.util.ArrayList;
@@ -93,6 +94,7 @@ class DefinitionParser {
 
                             TypeMirror typeArgument = null;
                             boolean optional = false;
+                            boolean list = false;
                             if (elem.getReturnType() instanceof DeclaredType) {
                                 DeclaredType returnType = (DeclaredType) elem.getReturnType();
                                 typeArgument = returnType.getTypeArguments().size() == 1
@@ -109,6 +111,42 @@ class DefinitionParser {
                                                 returnType,
                                                 optionalType
                                         );
+
+                                TypeMirror listType = processingEnv.getTypeUtils().erasure(
+                                        processingEnv.getElementUtils()
+                                                .getTypeElement(List.class.getCanonicalName())
+                                                .asType()
+                                );
+                                list = processingEnv.getTypeUtils()
+                                        .isAssignable(
+                                                returnType,
+                                                listType
+                                        );
+                            }
+
+                            boolean array = false;
+                            if (!list && !optional) {
+                                array = elem.getReturnType().getKind() == TypeKind.ARRAY;
+                            }
+                            else if (!list && optional) {
+                                array = typeArgument.getKind() == TypeKind.ARRAY;
+                            }
+
+                            PropertyKind propertyKind;
+                            if (list) {
+                                propertyKind = PropertyKind.LIST;
+                            }
+                            else if (optional && array) {
+                                propertyKind = PropertyKind.OPTIONAL_ARRAY;
+                            }
+                            else if (optional) {
+                                propertyKind = PropertyKind.OPTIONAL;
+                            }
+                            else if (array) {
+                                propertyKind = PropertyKind.ARRAY;
+                            }
+                            else {
+                                propertyKind = PropertyKind.PLAIN;
                             }
 
                             return Optional.of(
@@ -118,7 +156,7 @@ class DefinitionParser {
                                                     + matcher.group(2).substring(1),
                                             elem.getReturnType(),
                                             typeArgument,
-                                            optional
+                                            propertyKind
                                     )
                             );
                         })

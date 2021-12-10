@@ -20,6 +20,7 @@ import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -194,50 +195,49 @@ class ValueGenerator {
                 }
         );
 
-        value.getProperties()
-                .stream()
-                .filter(property -> property.getType().getKind() != TypeKind.ARRAY
-                        && (!property.isOptional()
-                        || property.getTypeArgument()
-                        .orElseThrow(IllegalStateException::new)
-                        .getKind() != TypeKind.ARRAY)
-                )
-                .forEach(
-                        property -> constructorBuilder.addStatement(
-                                "this.$L = $L",
-                                property.getName(),
-                                property.getName()
-                        )
-                );
-
-        value.getProperties()
-                .stream()
-                .filter(property -> property.getType().getKind() == TypeKind.ARRAY
-                        || (property.isOptional()
-                        && property.getTypeArgument()
-                        .orElseThrow(IllegalStateException::new)
-                        .getKind() == TypeKind.ARRAY)
-                )
-                .forEach(
-                        property -> constructorBuilder
-                                .beginControlFlow(
-                                        "if ($L != null)",
-                                        property.getName()
-                                )
-                                .addStatement(
-                                        "this.$L = $T.copyOf($L, $L.length)",
-                                        property.getName(),
-                                        ClassName.get(Arrays.class),
-                                        property.getName(),
-                                        property.getName()
-                                )
-                                .nextControlFlow("else")
-                                .addStatement(
-                                        "this.$L = null",
-                                        property.getName()
-                                )
-                                .endControlFlow()
-                );
+        value.getProperties().forEach(property -> {
+            switch (property.getPropertyKind()) {
+                case PLAIN:
+                case OPTIONAL:
+                    constructorBuilder.addStatement(
+                            "this.$L = $L",
+                            property.getName(),
+                            property.getName()
+                    );
+                    break;
+                case ARRAY:
+                case OPTIONAL_ARRAY:
+                    constructorBuilder
+                            .beginControlFlow(
+                                    "if ($L != null)",
+                                    property.getName()
+                            )
+                            .addStatement(
+                                    "this.$L = $T.copyOf($L, $L.length)",
+                                    property.getName(),
+                                    ClassName.get(Arrays.class),
+                                    property.getName(),
+                                    property.getName()
+                            )
+                            .nextControlFlow("else")
+                            .addStatement(
+                                    "this.$L = null",
+                                    property.getName()
+                            )
+                            .endControlFlow();
+                    break;
+                case LIST:
+                    constructorBuilder.addStatement(
+                            "this.$L = $T.unmodifiableList($L)",
+                            property.getName(),
+                            Collections.class,
+                            property.getName()
+                    );
+                    break;
+                default:
+                    throw new IllegalStateException();
+            }
+        });
 
         classBuilder.addMethod(constructorBuilder.build());
     }
@@ -249,30 +249,21 @@ class ValueGenerator {
         MethodSpec.Builder accessorBuilder = MethodSpec
                 .overriding((ExecutableElement) property.getElement());
 
-        if (property.isOptional()) {
-            boolean isArray = property.getTypeArgument()
-                    .orElseThrow(IllegalStateException::new)
-                    .getKind() == TypeKind.ARRAY;
-            if (isArray) {
+        switch (property.getPropertyKind()) {
+            case PLAIN:
                 accessorBuilder.addStatement(
-                        "return $T.ofNullable($L).map(val -> $T.copyOf(val, val.length))",
-                        ClassName.get(Optional.class),
-                        property.getName(),
-                        ClassName.get(Arrays.class)
+                        "return $L",
+                        property.getName()
                 );
-            }
-            else {
+                break;
+            case OPTIONAL:
                 accessorBuilder.addStatement(
                         "return $T.ofNullable($L)",
                         ClassName.get(Optional.class),
                         property.getName()
                 );
-            }
-        }
-        else {
-            boolean isArray = property.getType()
-                    .getKind() == TypeKind.ARRAY;
-            if (isArray) {
+                break;
+            case ARRAY:
                 accessorBuilder
                         .beginControlFlow(
                                 "if ($L == null)",
@@ -286,13 +277,25 @@ class ValueGenerator {
                                 property.getName(),
                                 property.getName()
                         );
-            }
-            else {
+                break;
+            case OPTIONAL_ARRAY:
                 accessorBuilder.addStatement(
-                        "return $L",
+                        "return $T.ofNullable($L).map(val -> $T.copyOf(val, val.length))",
+                        ClassName.get(Optional.class),
+                        property.getName(),
+                        ClassName.get(Arrays.class)
+                );
+                break;
+
+            case LIST:
+                accessorBuilder.addStatement(
+                        "return $T.unmodifiableList($L)",
+                        Collections.class,
                         property.getName()
                 );
-            }
+                break;
+            default:
+                throw new IllegalStateException();
         }
 
         classBuilder.addMethod(accessorBuilder.build());

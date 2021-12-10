@@ -6,6 +6,13 @@ and this project adheres poorly to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased]
 
+## [1.3.3] - 2021-12-10
+### Added
+- Full Java 17 support.
+
+### Security
+- Update dependencies.
+
 ## [1.3.2] - 2021-04-13
 ### Security
 - Update dependencies.

@@ -35,4 +35,4 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Build with Maven
-        run: mvn -B package -Denforcer.skip=true -Dsnoozy.dev
+        run: mvn -B package

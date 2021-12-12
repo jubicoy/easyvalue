@@ -6,6 +6,13 @@ and this project adheres poorly to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased]
 
+## [1.3.5] - 2021-12-12
+### Added
+- `Collections::unmodifiable*` wraps for `Set` and `Map` instances.
+
+### Fixed
+- Initial `Collections::unmodifiable*` logic to account for null values.
+
 ## [1.3.4] - 2021-12-10
 ### Changed
 - Wrap `List` instances in `Collections::unmodifiableList` to appease spotbugs.

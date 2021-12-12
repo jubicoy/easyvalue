@@ -631,19 +631,19 @@ class BuilderGenerator {
                                                 case LIST:
                                                     return "this.$L != null "
                                                             + "? $T.unmodifiableList(this.$L) "
-                                                            + ": this.$L != null "
+                                                            + ": defaults.$L != null "
                                                             + "? $T.unmodifiableList(defaults.$L) "
                                                             + ": null";
                                                 case SET:
                                                     return "this.$L != null "
                                                             + "? $T.unmodifiableSet(this.$L) "
-                                                            + ": this.$L != null "
+                                                            + ": defaults.$L != null "
                                                             + "? $T.unmodifiableSet(defaults.$L) "
                                                             + ": null";
                                                 case MAP:
                                                     return "this.$L != null "
                                                             + "? $T.unmodifiableMap(this.$L) "
-                                                            + ": this.$L != null "
+                                                            + ": defaults.$L != null "
                                                             + "? $T.unmodifiableMap(defaults.$L) "
                                                             + ": null";
                                                 default:

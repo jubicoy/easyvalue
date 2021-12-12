@@ -2,6 +2,11 @@ package fi.jubic.easyvalue;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -84,6 +89,49 @@ class DefaultsTest {
             @Override
             public Builder defaults(Builder builder) {
                 return builder.setStringValue("default");
+            }
+        }
+    }
+
+    @Test
+    void collectionDefaultValueUsed() {
+        // Not used
+        CollectionsClass obj1 = CollectionsClass.builder()
+                .setList(Collections.singletonList("a"))
+                .setSet(Collections.singleton("a"))
+                .setMap(Collections.singletonMap("a", "A"))
+                .build();
+
+        assertEquals(Collections.singletonList("a"), obj1.getList());
+        assertEquals(Collections.singleton("a"), obj1.getSet());
+        assertEquals(Collections.singletonMap("a", "A"), obj1.getMap());
+
+        // Used
+        CollectionsClass obj2 = CollectionsClass.builder().build();
+
+        assertEquals(Collections.emptyList(), obj2.getList());
+        assertEquals(Collections.emptySet(), obj2.getSet());
+        assertEquals(Collections.emptyMap(), obj2.getMap());
+    }
+
+    @EasyValue
+    abstract static class CollectionsClass {
+        abstract List<String> getList();
+
+        abstract Set<String> getSet();
+
+        abstract Map<String, String> getMap();
+
+        static Builder builder() {
+            return new Builder();
+        }
+
+        static class Builder extends EasyValue_DefaultsTest_CollectionsClass.Builder {
+            @Override
+            public Builder defaults(Builder builder) {
+                return builder.setList(Collections.emptyList())
+                        .setSet(Collections.emptySet())
+                        .setMap(Collections.emptyMap());
             }
         }
     }

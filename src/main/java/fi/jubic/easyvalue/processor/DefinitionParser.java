@@ -15,7 +15,9 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,6 +97,8 @@ class DefinitionParser {
                             TypeMirror typeArgument = null;
                             boolean optional = false;
                             boolean list = false;
+                            boolean set = false;
+                            boolean map = false;
                             if (elem.getReturnType() instanceof DeclaredType) {
                                 DeclaredType returnType = (DeclaredType) elem.getReturnType();
                                 typeArgument = returnType.getTypeArguments().size() == 1
@@ -122,19 +126,47 @@ class DefinitionParser {
                                                 returnType,
                                                 listType
                                         );
+
+                                TypeMirror setType = processingEnv.getTypeUtils().erasure(
+                                        processingEnv.getElementUtils()
+                                                .getTypeElement(Set.class.getCanonicalName())
+                                                .asType()
+                                );
+                                set = processingEnv.getTypeUtils()
+                                        .isAssignable(
+                                                returnType,
+                                                setType
+                                        );
+
+                                TypeMirror mapType = processingEnv.getTypeUtils().erasure(
+                                        processingEnv.getElementUtils()
+                                                .getTypeElement(Map.class.getCanonicalName())
+                                                .asType()
+                                );
+                                map = processingEnv.getTypeUtils()
+                                        .isAssignable(
+                                                returnType,
+                                                mapType
+                                        );
                             }
 
                             boolean array = false;
                             if (!list && !optional) {
                                 array = elem.getReturnType().getKind() == TypeKind.ARRAY;
                             }
-                            else if (!list && optional) {
+                            else if (!list) {
                                 array = typeArgument.getKind() == TypeKind.ARRAY;
                             }
 
                             PropertyKind propertyKind;
                             if (list) {
                                 propertyKind = PropertyKind.LIST;
+                            }
+                            else if (set) {
+                                propertyKind = PropertyKind.SET;
+                            }
+                            else if (map) {
+                                propertyKind = PropertyKind.MAP;
                             }
                             else if (optional && array) {
                                 propertyKind = PropertyKind.OPTIONAL_ARRAY;

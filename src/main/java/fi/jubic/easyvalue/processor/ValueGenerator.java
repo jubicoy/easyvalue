@@ -228,10 +228,29 @@ class ValueGenerator {
                     break;
                 case LIST:
                     constructorBuilder.addStatement(
-                            "this.$L = $T.unmodifiableList($L)",
+                            "this.$L = $T.ofNullable($L).map($T::unmodifiableList).orElse(null)",
                             property.getName(),
-                            Collections.class,
-                            property.getName()
+                            Optional.class,
+                            property.getName(),
+                            Collections.class
+                    );
+                    break;
+                case SET:
+                    constructorBuilder.addStatement(
+                            "this.$L = $T.ofNullable($L).map($T::unmodifiableSet).orElse(null)",
+                            property.getName(),
+                            Optional.class,
+                            property.getName(),
+                            Collections.class
+                    );
+                    break;
+                case MAP:
+                    constructorBuilder.addStatement(
+                            "this.$L = $T.ofNullable($L).map($T::unmodifiableMap).orElse(null)",
+                            property.getName(),
+                            Optional.class,
+                            property.getName(),
+                            Collections.class
                     );
                     break;
                 default:
@@ -289,9 +308,26 @@ class ValueGenerator {
 
             case LIST:
                 accessorBuilder.addStatement(
-                        "return $T.unmodifiableList($L)",
-                        Collections.class,
-                        property.getName()
+                        "return $T.ofNullable($L).map($T::unmodifiableList).orElse(null)",
+                        Optional.class,
+                        property.getName(),
+                        Collections.class
+                );
+                break;
+            case SET:
+                accessorBuilder.addStatement(
+                        "return $T.ofNullable($L).map($T::unmodifiableSet).orElse(null)",
+                        Optional.class,
+                        property.getName(),
+                        Collections.class
+                );
+                break;
+            case MAP:
+                accessorBuilder.addStatement(
+                        "return $T.ofNullable($L).map($T::unmodifiableMap).orElse(null)",
+                        Optional.class,
+                        property.getName(),
+                        Collections.class
                 );
                 break;
             default:

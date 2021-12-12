@@ -5,5 +5,7 @@ public enum PropertyKind {
     OPTIONAL,
     ARRAY,
     OPTIONAL_ARRAY,
-    LIST;
+    LIST,
+    SET,
+    MAP;
 }

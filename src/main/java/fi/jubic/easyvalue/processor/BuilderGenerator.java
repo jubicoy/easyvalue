@@ -147,10 +147,29 @@ class BuilderGenerator {
                     break;
                 case LIST:
                     constructorBuilder.addStatement(
-                            "this.$L = $T.unmodifiableList($L)",
+                            "this.$L = $T.ofNullable($L).map($T::unmodifiableList).orElse(null)",
                             property.getName(),
-                            Collections.class,
-                            property.getName()
+                            Optional.class,
+                            property.getName(),
+                            Collections.class
+                    );
+                    break;
+                case SET:
+                    constructorBuilder.addStatement(
+                            "this.$L = $T.ofNullable($L).map($T::unmodifiableSet).orElse(null)",
+                            property.getName(),
+                            Optional.class,
+                            property.getName(),
+                            Collections.class
+                    );
+                    break;
+                case MAP:
+                    constructorBuilder.addStatement(
+                            "this.$L = $T.ofNullable($L).map($T::unmodifiableMap).orElse(null)",
+                            property.getName(),
+                            Optional.class,
+                            property.getName(),
+                            Collections.class
                     );
                     break;
                 default:
@@ -233,12 +252,41 @@ class BuilderGenerator {
                     break;
                 case LIST:
                     fromSourceBuilder.addStatement(
-                            "builder.$L = $T.unmodifiableList(source.$L())",
-                                property.getName(),
-                                Collections.class,
-                                property.getElement()
-                                        .getSimpleName()
-                                        .toString()
+                            "builder.$L = $T.ofNullable(source.$L())"
+                                    + ".map($T::unmodifiableList)"
+                                    + ".orElse(null)",
+                            property.getName(),
+                            Optional.class,
+                            property.getElement()
+                                    .getSimpleName()
+                                    .toString(),
+                            Collections.class
+                    );
+                    break;
+                case SET:
+                    fromSourceBuilder.addStatement(
+                            "builder.$L = $T.ofNullable(source.$L())"
+                                    + ".map($T::unmodifiableSet)"
+                                    + ".orElse(null)",
+                            property.getName(),
+                            Optional.class,
+                            property.getElement()
+                                    .getSimpleName()
+                                    .toString(),
+                            Collections.class
+                    );
+                    break;
+                case MAP:
+                    fromSourceBuilder.addStatement(
+                            "builder.$L = $T.ofNullable(source.$L())"
+                                    + ".map($T::unmodifiableMap)"
+                                    + ".orElse(null)",
+                            property.getName(),
+                            Optional.class,
+                            property.getElement()
+                                    .getSimpleName()
+                                    .toString(),
+                            Collections.class
                     );
                     break;
                 default:
@@ -323,10 +371,35 @@ class BuilderGenerator {
                     if (valueProperty == property) {
                         if (property.getPropertyKind() == PropertyKind.LIST) {
                             setterBuilder.addStatement(
-                                    "builder.$L = $T.unmodifiableList($L)",
+                                    "builder.$L = $T.ofNullable($L)"
+                                            + ".map($T::unmodifiableList)"
+                                            + ".orElse(null)",
                                     valueProperty.getName(),
-                                    Collections.class,
-                                    valueProperty.getName()
+                                    Optional.class,
+                                    valueProperty.getName(),
+                                    Collections.class
+                            );
+                        }
+                        else if (property.getPropertyKind() == PropertyKind.SET) {
+                            setterBuilder.addStatement(
+                                    "builder.$L = $T.ofNullable($L)"
+                                            + ".map($T::unmodifiableSet)"
+                                            + ".orElse(null)",
+                                    valueProperty.getName(),
+                                    Optional.class,
+                                    valueProperty.getName(),
+                                    Collections.class
+                            );
+                        }
+                        else if (property.getPropertyKind() == PropertyKind.MAP) {
+                            setterBuilder.addStatement(
+                                    "builder.$L = $T.ofNullable($L)"
+                                            + ".map($T::unmodifiableMap)"
+                                            + ".orElse(null)",
+                                    valueProperty.getName(),
+                                    Optional.class,
+                                    valueProperty.getName(),
+                                    Collections.class
                             );
                         }
                         else {
@@ -454,9 +527,26 @@ class BuilderGenerator {
                 break;
             case LIST:
                 accessorBuilder.addStatement(
-                        "return $T.unmodifiableList($L)",
-                        Collections.class,
-                        property.getName()
+                        "return $T.ofNullable($L).map($T::unmodifiableList).orElse(null)",
+                        Optional.class,
+                        property.getName(),
+                        Collections.class
+                );
+                break;
+            case SET:
+                accessorBuilder.addStatement(
+                        "return $T.ofNullable($L).map($T::unmodifiableSet).orElse(null)",
+                        Optional.class,
+                        property.getName(),
+                        Collections.class
+                );
+                break;
+            case MAP:
+                accessorBuilder.addStatement(
+                        "return $T.ofNullable($L).map($T::unmodifiableMap).orElse(null)",
+                        Optional.class,
+                        property.getName(),
+                        Collections.class
                 );
                 break;
             default:
@@ -541,7 +631,21 @@ class BuilderGenerator {
                                                 case LIST:
                                                     return "this.$L != null "
                                                             + "? $T.unmodifiableList(this.$L) "
-                                                            + ": $T.unmodifiableList(defaults.$L)";
+                                                            + ": this.$L != null "
+                                                            + "? $T.unmodifiableList(defaults.$L) "
+                                                            + ": null";
+                                                case SET:
+                                                    return "this.$L != null "
+                                                            + "? $T.unmodifiableSet(this.$L) "
+                                                            + ": this.$L != null "
+                                                            + "? $T.unmodifiableSet(defaults.$L) "
+                                                            + ": null";
+                                                case MAP:
+                                                    return "this.$L != null "
+                                                            + "? $T.unmodifiableMap(this.$L) "
+                                                            + ": this.$L != null "
+                                                            + "? $T.unmodifiableMap(defaults.$L) "
+                                                            + ": null";
                                                 default:
                                                     throw new IllegalStateException();
                                             }
@@ -563,9 +667,12 @@ class BuilderGenerator {
                                                     return Stream.generate(prop::getName)
                                                             .limit(2);
                                                 case LIST:
+                                                case SET:
+                                                case MAP:
                                                     return Stream.of(
                                                             prop.getName(),
                                                             Collections.class,
+                                                            prop.getName(),
                                                             prop.getName(),
                                                             Collections.class,
                                                             prop.getName()

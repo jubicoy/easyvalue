@@ -6,6 +6,10 @@ and this project adheres poorly to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased]
 
+## [1.3.6] - 2021-12-13
+### Fixed
+- Collection property default value behavior.
+
 ## [1.3.5] - 2021-12-12
 ### Added
 - `Collections::unmodifiable*` wraps for `Set` and `Map` instances.

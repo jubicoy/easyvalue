@@ -6,6 +6,10 @@ and this project adheres poorly to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased]
 
+## [1.3.8] - 2023-03-09
+### Security
+- Update parent and dependencies.
+
 ## [1.3.7] - 2022-06-19
 ### Security
 - Update parent and jackson-databind

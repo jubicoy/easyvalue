@@ -5,7 +5,7 @@
         The vulnerable guava version is pulled in through auto-service. Given the provided
         scope any temp file permissions issues are not relevant.
         ]]></notes>
-        <packageUrl regex="false">pkg:maven/com.google.guava/guava@27.0.1-jre</packageUrl>
+        <packageUrl regex="true">pkg:maven/com\.google\.guava/guava@.+-jre</packageUrl>
         <vulnerabilityName>CVE-2020-8908</vulnerabilityName>
     </suppress>
 </suppressions>

@@ -6,6 +6,12 @@ and this project adheres poorly to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased]
 
+## [1.4.1] - 2024-05-06
+### Changed
+- Bump fi.jubic:easyparent from 0.1.10 to 0.1.12.
+- Bump com.fasterxml.jackson.core:jackson-annotations from 2.16.0 to 2.17.1.
+- Bump com.fasterxml.jackson.core:jackson-databind from 2.16.0 to 2.17.1.
+
 ## [1.4.0] - 2023-12-11
 ### Added
 - Java 21 tests.
